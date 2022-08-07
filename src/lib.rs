@@ -4,6 +4,14 @@ use std::hash::{Hash, Hasher};
 use std::io::{Error, ErrorKind};
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Sub, SubAssign};
 
+pub trait IntoSpan {
+    fn into_span(self) -> Span;
+}
+
+pub trait IntoInterval {
+    fn into_interval(self) -> Interval;
+}
+
 fn merge_span_segments(segments: &mut Vec<(i64, i64)>) {
     segments.sort_by_key(|&a| a.0);
     let mut index = 0;
@@ -81,6 +89,12 @@ impl Sub for Span {
 impl SubAssign for Span {
     fn sub_assign(&mut self, rhs: Self) {
         self.segments = self.clone().sub(rhs).segments;
+    }
+}
+
+impl IntoInterval for Span {
+    fn into_interval(self) -> Interval {
+        Interval::from(self)
     }
 }
 
@@ -318,6 +332,18 @@ impl Sub for Interval {
 impl SubAssign for Interval {
     fn sub_assign(&mut self, rhs: Self) {
         self.segments = self.clone().sub(rhs).segments;
+    }
+}
+
+impl From<Span> for Interval {
+    fn from(span: Span) -> Self {
+        Interval {
+            segments: span
+                .segments
+                .into_iter()
+                .map(|segment| (true, segment.0 as f64, segment.1 as f64, true))
+                .collect::<Vec<(bool, f64, f64, bool)>>(),
+        }
     }
 }
 
