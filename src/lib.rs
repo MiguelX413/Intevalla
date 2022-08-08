@@ -502,3 +502,29 @@ impl Interval {
         Self { segments: x }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::Span;
+
+    #[test]
+    fn span_unions() {
+        let a = Span::try_new([(1, 7), (15, 21), (29, 35), (43, 49), (57, 63)]).unwrap();
+        let b = Span::try_new([
+            (4, 8),
+            (11, 15),
+            (18, 22),
+            (25, 29),
+            (32, 36),
+            (39, 43),
+            (46, 50),
+            (53, 56),
+            (59, 63),
+        ])
+        .unwrap();
+        assert_eq!(
+            a.union(b),
+            Span::try_new([(1, 8), (11, 22), (25, 36), (39, 50), (53, 63)]).unwrap()
+        );
+    }
+}
