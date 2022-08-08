@@ -124,17 +124,15 @@ impl Span {
             for y in bottom_bound..other.segments.len() {
                 if x.1 < other.segments[y].0 {
                     break;
-                } else {
-                    if temp_left_bound < other.segments[y].0 {
-                        output
-                            .segments
-                            .push((temp_left_bound, other.segments[y].0 - 1));
-                    }
-                    if temp_left_bound < other.segments[y].1 + 1 {
-                        temp_left_bound = other.segments[y].1 + 1;
-                    }
-                    next_bound = y + 1;
                 }
+                let temp = (temp_left_bound, other.segments[y].0 - 1);
+                if temp.0 <= temp.1 {
+                    output.segments.push(temp);
+                }
+                if temp_left_bound < other.segments[y].1 + 1 {
+                    temp_left_bound = other.segments[y].1 + 1;
+                }
+                next_bound = y + 1;
             }
             if temp_left_bound <= x.1 {
                 output.segments.push((temp_left_bound, x.1));
@@ -398,23 +396,22 @@ impl Interval {
                     | ((x.2 == other.segments[y].1) & !(x.3 & other.segments[y].0))
                 {
                     break;
-                } else {
-                    let temp = (
-                        temp_left_bound.0,
-                        temp_left_bound.1,
-                        other.segments[y].1,
-                        !other.segments[y].0,
-                    );
-                    if validate_interval_segment(&temp) {
-                        output.segments.push(temp);
-                    }
-                    if (temp_left_bound.1 < other.segments[y].2)
-                        | ((temp_left_bound.1 == other.segments[y].2) & temp_left_bound.0)
-                    {
-                        temp_left_bound = (!other.segments[y].3, other.segments[y].2);
-                    }
-                    next_bound = y + 1;
                 }
+                let temp = (
+                    temp_left_bound.0,
+                    temp_left_bound.1,
+                    other.segments[y].1,
+                    !other.segments[y].0,
+                );
+                if validate_interval_segment(&temp) {
+                    output.segments.push(temp);
+                }
+                if (temp_left_bound.1 < other.segments[y].2)
+                    | ((temp_left_bound.1 == other.segments[y].2) & temp_left_bound.0)
+                {
+                    temp_left_bound = (!other.segments[y].3, other.segments[y].2);
+                }
+                next_bound = y + 1;
             }
             let last_segment = (temp_left_bound.0, temp_left_bound.1, x.2, x.3);
             if validate_interval_segment(&last_segment) {
