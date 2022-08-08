@@ -111,37 +111,36 @@ impl Span {
     }
 
     pub fn difference(self, other: Self) -> Self {
-        if !other.segments.is_empty() {
-            let mut output = Self::default();
-            let mut next_bound = 0;
-            let mut bottom_bound;
-            let mut temp_left_bound;
-            for &x in &self.segments {
-                temp_left_bound = x.0;
-                bottom_bound = next_bound;
-                for y in bottom_bound..other.segments.len() {
-                    if x.1 < other.segments[y].0 {
-                        break;
-                    } else {
-                        if temp_left_bound < other.segments[y].0 {
-                            output
-                                .segments
-                                .push((temp_left_bound, other.segments[y].0 - 1));
-                        }
-                        if temp_left_bound < other.segments[y].1 + 1 {
-                            temp_left_bound = other.segments[y].1 + 1;
-                        }
-                        next_bound = y + 1;
+        if other.segments.is_empty() {
+            return self;
+        }
+        let mut output = Self::default();
+        let mut next_bound = 0;
+        let mut bottom_bound;
+        let mut temp_left_bound;
+        for &x in &self.segments {
+            temp_left_bound = x.0;
+            bottom_bound = next_bound;
+            for y in bottom_bound..other.segments.len() {
+                if x.1 < other.segments[y].0 {
+                    break;
+                } else {
+                    if temp_left_bound < other.segments[y].0 {
+                        output
+                            .segments
+                            .push((temp_left_bound, other.segments[y].0 - 1));
                     }
-                }
-                if temp_left_bound <= x.1 {
-                    output.segments.push((temp_left_bound, x.1));
+                    if temp_left_bound < other.segments[y].1 + 1 {
+                        temp_left_bound = other.segments[y].1 + 1;
+                    }
+                    next_bound = y + 1;
                 }
             }
-            output
-        } else {
-            self
+            if temp_left_bound <= x.1 {
+                output.segments.push((temp_left_bound, x.1));
+            }
         }
+        output
     }
 
     pub fn intersection(self, other: Self) -> Self {
@@ -384,46 +383,45 @@ impl Interval {
     }
 
     pub fn difference(self, other: Self) -> Self {
-        if !other.segments.is_empty() {
-            let mut output = Self::default();
-            let mut next_bound = 0;
-            let mut bottom_bound;
-            let mut temp_left_bound;
-            for &x in &self.segments {
-                temp_left_bound = (x.0, x.1);
-                bottom_bound = next_bound;
-                for y in bottom_bound..other.segments.len() {
-                    if (x.2 < other.segments[y].1)
-                        | ((x.2 == other.segments[y].1) & !(x.3 & other.segments[y].0))
-                    {
-                        break;
-                    } else {
-                        let temp = (
-                            temp_left_bound.0,
-                            temp_left_bound.1,
-                            other.segments[y].1,
-                            !other.segments[y].0,
-                        );
-                        if validate_interval_segment(&temp) {
-                            output.segments.push(temp);
-                        }
-                        if (temp_left_bound.1 < other.segments[y].2)
-                            | ((temp_left_bound.1 == other.segments[y].2) & temp_left_bound.0)
-                        {
-                            temp_left_bound = (!other.segments[y].3, other.segments[y].2);
-                        }
-                        next_bound = y + 1;
+        if other.segments.is_empty() {
+            return self;
+        }
+        let mut output = Self::default();
+        let mut next_bound = 0;
+        let mut bottom_bound;
+        let mut temp_left_bound;
+        for &x in &self.segments {
+            temp_left_bound = (x.0, x.1);
+            bottom_bound = next_bound;
+            for y in bottom_bound..other.segments.len() {
+                if (x.2 < other.segments[y].1)
+                    | ((x.2 == other.segments[y].1) & !(x.3 & other.segments[y].0))
+                {
+                    break;
+                } else {
+                    let temp = (
+                        temp_left_bound.0,
+                        temp_left_bound.1,
+                        other.segments[y].1,
+                        !other.segments[y].0,
+                    );
+                    if validate_interval_segment(&temp) {
+                        output.segments.push(temp);
                     }
-                }
-                let last_segment = (temp_left_bound.0, temp_left_bound.1, x.2, x.3);
-                if validate_interval_segment(&last_segment) {
-                    output.segments.push(last_segment);
+                    if (temp_left_bound.1 < other.segments[y].2)
+                        | ((temp_left_bound.1 == other.segments[y].2) & temp_left_bound.0)
+                    {
+                        temp_left_bound = (!other.segments[y].3, other.segments[y].2);
+                    }
+                    next_bound = y + 1;
                 }
             }
-            output
-        } else {
-            self
+            let last_segment = (temp_left_bound.0, temp_left_bound.1, x.2, x.3);
+            if validate_interval_segment(&last_segment) {
+                output.segments.push(last_segment);
+            }
         }
+        output
     }
 
     pub fn intersection(&self, other: Self) -> Self {
