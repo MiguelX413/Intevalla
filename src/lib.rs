@@ -20,7 +20,7 @@ fn merge_span_segments(segments: &mut Vec<(i64, i64)>) {
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
 pub struct Span {
-    pub segments: Vec<(i64, i64)>,
+    pub(crate) segments: Vec<(i64, i64)>,
 }
 
 impl Display for Span {
@@ -100,6 +100,10 @@ impl Span {
             .collect::<Result<Vec<(i64, i64)>, Error>>()?;
         merge_span_segments(&mut output);
         Ok(Self { segments: output })
+    }
+
+    pub fn segments(&self) -> &[(i64, i64)] {
+        &self.segments
     }
 
     pub fn contains(&self, item: i64) -> bool {
@@ -232,7 +236,7 @@ fn validate_interval_segment(segment: &(bool, f64, f64, bool)) -> bool {
 
 #[derive(Clone, Debug, Default)]
 pub struct Interval {
-    pub segments: Vec<(bool, f64, f64, bool)>,
+    pub(crate) segments: Vec<(bool, f64, f64, bool)>,
 }
 
 impl Display for Interval {
@@ -367,6 +371,10 @@ impl Interval {
 
         merge_interval_segments(&mut output);
         Ok(Self { segments: output })
+    }
+
+    pub fn segments(&self) -> &[(bool, f64, f64, bool)] {
+        &self.segments
     }
 
     pub fn contains(&self, item: f64) -> bool {
