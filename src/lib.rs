@@ -85,7 +85,7 @@ impl SubAssign for Span {
 }
 
 impl Span {
-    pub fn new(segments: impl IntoIterator<Item = (i64, i64)>) -> Result<Self, Error> {
+    pub fn try_new(segments: impl IntoIterator<Item = (i64, i64)>) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
             .map(|f| {
@@ -334,7 +334,9 @@ impl From<Span> for Interval {
 }
 
 impl Interval {
-    pub fn new(segments: impl IntoIterator<Item = (bool, f64, f64, bool)>) -> Result<Self, Error> {
+    pub fn try_new(
+        segments: impl IntoIterator<Item = (bool, f64, f64, bool)>,
+    ) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
             .filter_map(|f| {
