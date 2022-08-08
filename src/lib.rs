@@ -98,12 +98,6 @@ impl SubAssign for Span {
     }
 }
 
-impl IntoInterval for Span {
-    fn into_interval(self) -> Interval {
-        Interval::from(self)
-    }
-}
-
 impl Span {
     pub fn new(segments: impl IntoIterator<Item = (i64, i64)>) -> Result<Self, Error> {
         let mut output = segments
