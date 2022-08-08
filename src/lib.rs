@@ -321,6 +321,18 @@ impl SubAssign for Interval {
     }
 }
 
+impl From<Span> for Interval {
+    fn from(span: Span) -> Self {
+        Interval {
+            segments: span
+                .segments
+                .into_iter()
+                .map(|segment| (true, segment.0 as f64, segment.1 as f64, true))
+                .collect::<Vec<(bool, f64, f64, bool)>>(),
+        }
+    }
+}
+
 impl Interval {
     pub fn new(segments: impl IntoIterator<Item = (bool, f64, f64, bool)>) -> Result<Self, Error> {
         let mut output = segments
