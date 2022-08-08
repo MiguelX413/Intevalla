@@ -112,7 +112,7 @@ impl Span {
 
     pub fn difference(self, other: Self) -> Self {
         if !other.segments.is_empty() {
-            let mut output = Self { segments: vec![] };
+            let mut output = Self::default();
             let mut next_bound = 0;
             let mut bottom_bound;
             let mut temp_left_bound;
@@ -145,7 +145,7 @@ impl Span {
     }
 
     pub fn intersection(self, other: Self) -> Self {
-        let mut output = Self { segments: vec![] };
+        let mut output = Self::default();
         let mut next_bound = 0;
         let mut bottom_bound;
         for &x in &self.segments {
@@ -385,7 +385,7 @@ impl Interval {
 
     pub fn difference(self, other: Self) -> Self {
         if !other.segments.is_empty() {
-            let mut output = Self { segments: vec![] };
+            let mut output = Self::default();
             let mut next_bound = 0;
             let mut bottom_bound;
             let mut temp_left_bound;
@@ -427,7 +427,7 @@ impl Interval {
     }
 
     pub fn intersection(&self, other: Self) -> Self {
-        let mut output = Self { segments: vec![] };
+        let mut output = Self::default();
         let mut next_bound = 0;
         let mut bottom_bound;
         for &x in &self.segments {
