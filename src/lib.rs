@@ -12,6 +12,12 @@ pub trait IntoInterval {
     fn into_interval(self) -> Interval;
 }
 
+impl<T: Into<Interval>> IntoInterval for T {
+    fn into_interval(self) -> Interval {
+        <T as Into<Interval>>::into(self)
+    }
+}
+
 fn merge_span_segments(segments: &mut Vec<(i64, i64)>) {
     segments.sort_by_key(|&a| a.0);
     let mut index = 0;
