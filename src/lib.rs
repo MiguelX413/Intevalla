@@ -106,8 +106,10 @@ impl Span {
         &self.segments
     }
 
-    pub fn contains(&self, item: i64) -> bool {
-        self.segments.iter().any(|&f| (f.0 <= item) & (item <= f.1))
+    pub fn contains(&self, item: &i64) -> bool {
+        self.segments
+            .iter()
+            .any(|&f| (f.0 <= *item) & (*item <= f.1))
     }
 
     pub fn difference(self, other: Self) -> Self {
@@ -374,9 +376,9 @@ impl Interval {
         &self.segments
     }
 
-    pub fn contains(&self, item: f64) -> bool {
+    pub fn contains(&self, item: &f64) -> bool {
         self.segments.iter().any(|&f| {
-            ((f.1 < item) & (item < f.2)) | (((item == f.1) & f.0) | ((item == f.2) & f.3))
+            ((f.1 < *item) & (*item < f.2)) | (((*item == f.1) & f.0) | ((*item == f.2) & f.3))
         })
     }
 
