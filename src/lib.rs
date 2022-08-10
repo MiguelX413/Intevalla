@@ -25,18 +25,17 @@ pub struct Span {
 
 impl Display for Span {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if !self.segments.is_empty() {
-            write!(
-                f,
-                "{}",
-                self.segments
-                    .iter()
-                    .map(|&f| format!("[{}, {}]", f.0, f.1))
-                    .collect::<Vec<String>>()
-                    .join(" ∪ ")
-            )
-        } else {
-            write!(f, "∅")
+        match self.segments.split_first() {
+            Some((&first, elements)) => {
+                write!(f, "[{}, {}]", first.0, first.1)?;
+                for &element in elements {
+                    write!(f, " ∪ [{}, {}]", element.0, element.1)?;
+                }
+                Ok(())
+            }
+            None => {
+                write!(f, "∅")
+            }
         }
     }
 }
@@ -240,26 +239,31 @@ pub struct Interval {
 
 impl Display for Interval {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if !self.segments.is_empty() {
-            write!(
-                f,
-                "{}",
-                self.segments
-                    .iter()
-                    .map(|&f| {
-                        format!(
-                            "{}{}, {}{}",
-                            if f.0 { "[" } else { "(" },
-                            f.1,
-                            f.2,
-                            if f.3 { "]" } else { ")" },
-                        )
-                    })
-                    .collect::<Vec<String>>()
-                    .join(" ∪ ")
-            )
-        } else {
-            write!(f, "∅")
+        match self.segments.split_first() {
+            Some((&first, elements)) => {
+                write!(
+                    f,
+                    "{}{}, {}{}",
+                    if first.0 { "[" } else { "(" },
+                    first.1,
+                    first.2,
+                    if first.3 { "]" } else { ")" }
+                )?;
+                for &element in elements {
+                    write!(
+                        f,
+                        " ∪ {}{}, {}{}",
+                        if element.0 { "[" } else { "(" },
+                        element.1,
+                        element.2,
+                        if element.3 { "]" } else { ")" }
+                    )?;
+                }
+                Ok(())
+            }
+            None => {
+                write!(f, "∅")
+            }
         }
     }
 }
