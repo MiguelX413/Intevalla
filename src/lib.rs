@@ -1,7 +1,12 @@
-use std::cmp::{max, min, Ordering};
-use std::fmt::{Display, Formatter};
-use std::hash::{Hash, Hasher};
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Sub, SubAssign};
+#![no_std]
+
+extern crate alloc;
+
+use alloc::vec::Vec;
+use core::cmp::{max, min, Ordering};
+use core::fmt::{Display, Formatter};
+use core::hash::{Hash, Hasher};
+use core::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Sub, SubAssign};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Error {
@@ -30,7 +35,7 @@ pub struct Span {
 }
 
 impl Display for Span {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.segments.split_first() {
             Some((&first, elements)) => {
                 write!(f, "[{}, {}]", first.0, first.1)?;
@@ -239,7 +244,7 @@ pub struct Interval {
 }
 
 impl Display for Interval {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         match self.segments.split_first() {
             Some((&first, elements)) => {
                 write!(
