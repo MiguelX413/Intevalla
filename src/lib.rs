@@ -1,8 +1,14 @@
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::io::{Error, ErrorKind};
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Sub, SubAssign};
+
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
+pub enum Error {
+    SegmentPointNaN,
+    StartPointGreaterThanEndPoint,
+    ContainInf,
+}
 
 fn merge_span_segments(segments: &mut Vec<(i64, i64)>) {
     segments.sort_by_key(|&a| a.0);
@@ -89,10 +95,7 @@ impl Span {
             .into_iter()
             .map(|f| {
                 if f.0 > f.1 {
-                    return Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Start point of segment cannot be greater than its end point",
-                    ));
+                    return Err(Error::StartPointGreaterThanEndPoint);
                 }
                 Ok(f)
             })
@@ -346,22 +349,13 @@ impl Interval {
             .into_iter()
             .filter_map(|f| {
                 if f.1.is_nan() | f.2.is_nan() {
-                    return Some(Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Segment points cannot be NaN",
-                    )));
+                    return Some(Err(Error::SegmentPointNaN));
                 }
                 if f.1 > f.2 {
-                    return Some(Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Start point of segment cannot be greater than its end point",
-                    )));
+                    return Some(Err(Error::StartPointGreaterThanEndPoint));
                 }
                 if (f.1.is_infinite() & f.0) | (f.2.is_infinite() & f.3) {
-                    return Some(Err(Error::new(
-                        ErrorKind::InvalidInput,
-                        "Interval cannot contain inf",
-                    )));
+                    return Some(Err(Error::ContainInf));
                 }
                 if (f.1 == f.2) & (!f.0 | !f.3) {
                     return None;
