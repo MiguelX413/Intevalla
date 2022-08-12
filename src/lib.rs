@@ -114,24 +114,22 @@ impl Span {
             return self;
         }
         let mut output = Self::default();
-        let mut next_bound = 0;
-        let mut bottom_bound;
+        let mut bottom_bound = 0;
         let mut temp_left_bound;
         for &x in &self.segments {
             temp_left_bound = x.0;
-            bottom_bound = next_bound;
-            for y in bottom_bound..other.segments.len() {
-                if x.1 < other.segments[y].0 {
+            for &y in &other.segments[bottom_bound..] {
+                if x.1 < y.0 {
                     break;
                 }
-                let temp = (temp_left_bound, other.segments[y].0 - 1);
+                let temp = (temp_left_bound, y.0 - 1);
                 if temp.0 <= temp.1 {
                     output.segments.push(temp);
                 }
-                if temp_left_bound < other.segments[y].1 + 1 {
-                    temp_left_bound = other.segments[y].1 + 1;
+                if temp_left_bound < y.1 + 1 {
+                    temp_left_bound = y.1 + 1;
                 }
-                next_bound = y + 1;
+                bottom_bound += 1;
             }
             if temp_left_bound <= x.1 {
                 output.segments.push((temp_left_bound, x.1));
@@ -142,20 +140,18 @@ impl Span {
 
     pub fn intersection(self, other: Self) -> Self {
         let mut output = Self::default();
-        let mut next_bound = 0;
-        let mut bottom_bound;
+        let mut bottom_bound = 0;
         for &x in &self.segments {
-            bottom_bound = next_bound;
-            for y in bottom_bound..other.segments.len() {
-                if x.1 < other.segments[y].0 {
+            for (y_i, &y) in other.segments[bottom_bound..].iter().enumerate() {
+                if x.1 < y.0 {
                     break;
                 } else {
-                    let left = max(x.0, other.segments[y].0);
-                    let right = min(x.1, other.segments[y].1);
+                    let left = max(x.0, y.0);
+                    let right = min(x.1, y.1);
                     if left <= right {
                         output.segments.push((left, right));
                     }
-                    next_bound = y;
+                    bottom_bound += y_i;
                 }
             }
         }
@@ -389,33 +385,22 @@ impl Interval {
             return self;
         }
         let mut output = Self::default();
-        let mut next_bound = 0;
-        let mut bottom_bound;
+        let mut bottom_bound = 0;
         let mut temp_left_bound;
         for &x in &self.segments {
             temp_left_bound = (x.0, x.1);
-            bottom_bound = next_bound;
-            for y in bottom_bound..other.segments.len() {
-                if (x.2 < other.segments[y].1)
-                    | ((x.2 == other.segments[y].1) & !(x.3 & other.segments[y].0))
-                {
+            for &y in &other.segments[bottom_bound..] {
+                if (x.2 < y.1) | ((x.2 == y.1) & !(x.3 & y.0)) {
                     break;
                 }
-                let temp = (
-                    temp_left_bound.0,
-                    temp_left_bound.1,
-                    other.segments[y].1,
-                    !other.segments[y].0,
-                );
+                let temp = (temp_left_bound.0, temp_left_bound.1, y.1, !y.0);
                 if validate_interval_segment(&temp) {
                     output.segments.push(temp);
                 }
-                if (temp_left_bound.1 < other.segments[y].2)
-                    | ((temp_left_bound.1 == other.segments[y].2) & temp_left_bound.0)
-                {
-                    temp_left_bound = (!other.segments[y].3, other.segments[y].2);
+                if (temp_left_bound.1 < y.2) | ((temp_left_bound.1 == y.2) & temp_left_bound.0) {
+                    temp_left_bound = (!y.3, y.2);
                 }
-                next_bound = y + 1;
+                bottom_bound += 1;
             }
             let last_segment = (temp_left_bound.0, temp_left_bound.1, x.2, x.3);
             if validate_interval_segment(&last_segment) {
@@ -431,31 +416,27 @@ impl Interval {
         let mut bottom_bound;
         for &x in &self.segments {
             bottom_bound = next_bound;
-            for y in bottom_bound..other.segments.len() {
-                if (x.2 < other.segments[y].1)
-                    | ((x.2 == other.segments[y].1) & !(x.3 & other.segments[y].0))
-                {
+            for (y_i, &y) in other.segments[bottom_bound..].iter().enumerate() {
+                if (x.2 < y.1) | ((x.2 == y.1) & !(x.3 & y.0)) {
                     break;
                 } else {
-                    let left =
-                        if (x.1 > other.segments[y].1) | ((x.1 == other.segments[y].1) & !x.0) {
-                            (x.0, x.1)
-                        } else {
-                            (other.segments[y].0, other.segments[y].1)
-                        };
+                    let left = if (x.1 > y.1) | ((x.1 == y.1) & !x.0) {
+                        (x.0, x.1)
+                    } else {
+                        (y.0, y.1)
+                    };
 
-                    let right =
-                        if (x.2 < other.segments[y].2) | ((x.2 == other.segments[y].2) & !x.3) {
-                            (x.2, x.3)
-                        } else {
-                            (other.segments[y].2, other.segments[y].3)
-                        };
+                    let right = if (x.2 < y.2) | ((x.2 == y.2) & !x.3) {
+                        (x.2, x.3)
+                    } else {
+                        (y.2, y.3)
+                    };
 
                     if validate_interval_segment(&(left.0, left.1, right.0, right.1)) {
                         output.segments.push((left.0, left.1, right.0, right.1));
                     }
 
-                    next_bound = y;
+                    next_bound += y_i;
                 }
             }
         }
