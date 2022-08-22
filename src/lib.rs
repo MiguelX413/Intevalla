@@ -1,7 +1,6 @@
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
-use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Sub, SubAssign};
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Error {
@@ -43,49 +42,6 @@ impl Display for Span {
                 write!(f, "∅")
             }
         }
-    }
-}
-
-impl BitAnd for Span {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        self.intersection(rhs)
-    }
-}
-
-impl BitAndAssign for Span {
-    fn bitand_assign(&mut self, rhs: Self) {
-        self.segments = self.clone().bitand(rhs).segments;
-    }
-}
-
-impl BitOr for Span {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        self.union(rhs)
-    }
-}
-
-impl BitOrAssign for Span {
-    fn bitor_assign(&mut self, rhs: Self) {
-        self.segments.extend(rhs.segments.iter());
-        merge_span_segments(&mut self.segments);
-    }
-}
-
-impl Sub for Span {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.difference(rhs)
-    }
-}
-
-impl SubAssign for Span {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.segments = self.clone().sub(rhs).segments;
     }
 }
 
@@ -283,49 +239,6 @@ impl Hash for Interval {
 impl PartialEq for Interval {
     fn eq(&self, other: &Self) -> bool {
         self.segments == other.segments
-    }
-}
-
-impl BitAnd for Interval {
-    type Output = Self;
-
-    fn bitand(self, rhs: Self) -> Self::Output {
-        self.intersection(rhs)
-    }
-}
-
-impl BitAndAssign for Interval {
-    fn bitand_assign(&mut self, rhs: Self) {
-        self.segments = self.clone().bitand(rhs).segments;
-    }
-}
-
-impl BitOr for Interval {
-    type Output = Self;
-
-    fn bitor(self, rhs: Self) -> Self::Output {
-        self.union(rhs)
-    }
-}
-
-impl BitOrAssign for Interval {
-    fn bitor_assign(&mut self, rhs: Self) {
-        self.segments.extend(rhs.segments.iter());
-        merge_interval_segments(&mut self.segments);
-    }
-}
-
-impl Sub for Interval {
-    type Output = Self;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        self.difference(rhs)
-    }
-}
-
-impl SubAssign for Interval {
-    fn sub_assign(&mut self, rhs: Self) {
-        self.segments = self.clone().sub(rhs).segments;
     }
 }
 
