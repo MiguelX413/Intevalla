@@ -2,7 +2,11 @@
 name = "intervalla"
 version = "0.1.0-a0"
 edition = "2021"
-
+authors = ["MiguelX413 <lbpgaming27@gmail.com>"]
+description = "A crate that implements Interval math and Spans in Rust."
+license = "LGPL-2.1-only"
+readme = "README.md"
+repository = "https://github.com/MiguelX413/intevalla"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
