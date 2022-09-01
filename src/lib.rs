@@ -55,7 +55,7 @@ impl Span {
                 }
                 Ok(f)
             })
-            .collect::<Result<Vec<(i64, i64)>, Error>>()?;
+            .collect::<Result<Vec<_>, Error>>()?;
         merge_span_segments(&mut output);
         Ok(Self { segments: output })
     }
@@ -231,7 +231,7 @@ impl Hash for Interval {
             .segments
             .iter()
             .map(|&f| (f.0, f.1.to_bits(), f.2.to_bits(), f.3))
-            .collect::<Vec<(bool, u64, u64, bool)>>(),)
+            .collect::<Vec<_>>(),)
             .hash(state)
     }
 }
@@ -249,7 +249,7 @@ impl From<Span> for Interval {
                 .segments
                 .into_iter()
                 .map(|segment| (true, segment.0 as f64, segment.1 as f64, true))
-                .collect::<Vec<(bool, f64, f64, bool)>>(),
+                .collect::<Vec<_>>(),
         }
     }
 }
@@ -275,7 +275,7 @@ impl Interval {
                 }
                 Some(Ok(f))
             })
-            .collect::<Result<Vec<(bool, f64, f64, bool)>, Error>>()?;
+            .collect::<Result<Vec<_>, Error>>()?;
 
         merge_interval_segments(&mut output);
         Ok(Self { segments: output })
