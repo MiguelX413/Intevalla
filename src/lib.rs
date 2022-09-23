@@ -188,9 +188,9 @@ impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
         self.union_all([other])
     }
 
-    pub fn union_all(self, others: impl IntoIterator<Item = impl Into<Self>>) -> Self {
+    pub fn union_all(self, others: impl IntoIterator<Item = Self>) -> Self {
         let mut x = self.segments;
-        x.extend(others.into_iter().flat_map(|f| f.into().segments));
+        x.extend(others.into_iter().flat_map(|f| f.segments));
         merge_span_segments(&mut x);
         Self { segments: x }
     }
@@ -445,9 +445,9 @@ impl<FLOAT: Float> Interval<FLOAT> {
         self.union_all([other])
     }
 
-    pub fn union_all(self, others: impl IntoIterator<Item = impl Into<Self>>) -> Self {
+    pub fn union_all(self, others: impl IntoIterator<Item = Self>) -> Self {
         let mut x = self.segments;
-        x.extend(others.into_iter().flat_map(|f| f.into().segments));
+        x.extend(others.into_iter().flat_map(|f| f.segments));
         merge_interval_segments(&mut x);
         Self { segments: x }
     }
