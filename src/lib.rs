@@ -47,7 +47,7 @@ impl<INT: Integer + Clone + Display + FromPrimitive> Display for Span<INT> {
     }
 }
 
-impl<INT: Integer + Clone + Default + Display + FromPrimitive> Span<INT> {
+impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
     pub fn try_new(segments: impl IntoIterator<Item = (INT, INT)>) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
@@ -77,7 +77,7 @@ impl<INT: Integer + Clone + Default + Display + FromPrimitive> Span<INT> {
         if other.segments.is_empty() {
             return self;
         }
-        let mut output = Self::default();
+        let mut output = Self { segments: vec![] };
         let mut next_bound = 0;
         let mut bottom_bound;
         let mut temp_left_bound;
@@ -108,7 +108,7 @@ impl<INT: Integer + Clone + Default + Display + FromPrimitive> Span<INT> {
     }
 
     pub fn intersection(self, other: Self) -> Self {
-        let mut output = Self::default();
+        let mut output = Self { segments: vec![] };
         let mut next_bound = 0;
         let mut bottom_bound;
         for x in &self.segments {
