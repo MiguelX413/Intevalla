@@ -1,3 +1,4 @@
+use num::{FromPrimitive, Integer};
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -9,31 +10,32 @@ pub enum Error {
     ContainInf,
 }
 
-fn merge_span_segments(segments: &mut Vec<(i64, i64)>) {
-    segments.sort_by_key(|&a| a.0);
+fn merge_span_segments<INT: Integer + Clone + FromPrimitive>(segments: &mut Vec<(INT, INT)>) {
+    let one = INT::from_u8(1).unwrap();
+    segments.sort_by_key(|a| a.0.clone());
     let mut index = 0;
     for i in 1..segments.len() {
-        if segments[index].1 >= segments[i].0 - 1 {
-            segments[index].1 = max(segments[index].1, segments[i].1);
+        if segments[index].1 >= segments[i].0.clone() - one.clone() {
+            segments[index].1 = max(segments[index].1.clone(), segments[i].1.clone());
         } else {
             index += 1;
-            segments[index] = segments[i];
+            segments[index] = segments[i].clone();
         }
     }
     segments.truncate(index + 1);
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
-pub struct Span {
-    pub(crate) segments: Vec<(i64, i64)>,
+pub struct Span<INT: Integer + Clone + FromPrimitive> {
+    pub(crate) segments: Vec<(INT, INT)>,
 }
 
-impl Display for Span {
+impl<INT: Integer + Clone + Display + FromPrimitive> Display for Span<INT> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
-            Some((&first, elements)) => {
+            Some((first, elements)) => {
                 write!(f, "[{}, {}]", first.0, first.1)?;
-                for &element in elements {
+                for element in elements {
                     write!(f, " ∪ [{}, {}]", element.0, element.1)?;
                 }
                 Ok(())
@@ -45,8 +47,8 @@ impl Display for Span {
     }
 }
 
-impl Span {
-    pub fn try_new(segments: impl IntoIterator<Item = (i64, i64)>) -> Result<Self, Error> {
+impl<INT: Integer + Clone + Default + Display + FromPrimitive> Span<INT> {
+    pub fn try_new(segments: impl IntoIterator<Item = (INT, INT)>) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
             .map(|f| {
@@ -60,15 +62,18 @@ impl Span {
         Ok(Self { segments: output })
     }
 
-    pub fn segments(&self) -> &[(i64, i64)] {
+    pub fn segments(&self) -> &[(INT, INT)] {
         &self.segments
     }
 
-    pub fn contains(&self, &item: &i64) -> bool {
-        self.segments.iter().any(|&f| (f.0 <= item) & (item <= f.1))
+    pub fn contains(&self, item: &INT) -> bool {
+        self.segments
+            .iter()
+            .any(|f| (&f.0 <= item) & (item <= &f.1))
     }
 
     pub fn difference(self, other: Self) -> Self {
+        let one = INT::from_u8(1).unwrap();
         if other.segments.is_empty() {
             return self;
         }
@@ -76,24 +81,27 @@ impl Span {
         let mut next_bound = 0;
         let mut bottom_bound;
         let mut temp_left_bound;
-        for &x in &self.segments {
-            temp_left_bound = x.0;
+        for x in &self.segments {
+            temp_left_bound = x.0.clone();
             bottom_bound = next_bound;
             for y in bottom_bound..other.segments.len() {
                 if x.1 < other.segments[y].0 {
                     break;
                 }
-                let temp = (temp_left_bound, other.segments[y].0 - 1);
+                let temp = (
+                    temp_left_bound.clone(),
+                    other.segments[y].0.clone() - one.clone(),
+                );
                 if temp.0 <= temp.1 {
                     output.segments.push(temp);
                 }
-                if temp_left_bound < other.segments[y].1 + 1 {
-                    temp_left_bound = other.segments[y].1 + 1;
+                if temp_left_bound < other.segments[y].1.clone() + one.clone() {
+                    temp_left_bound = other.segments[y].1.clone() + one.clone();
                 }
                 next_bound = y + 1;
             }
             if temp_left_bound <= x.1 {
-                output.segments.push((temp_left_bound, x.1));
+                output.segments.push((temp_left_bound, x.1.clone()));
             }
         }
         output
@@ -103,14 +111,14 @@ impl Span {
         let mut output = Self::default();
         let mut next_bound = 0;
         let mut bottom_bound;
-        for &x in &self.segments {
+        for x in &self.segments {
             bottom_bound = next_bound;
             for y in bottom_bound..other.segments.len() {
                 if x.1 < other.segments[y].0 {
                     break;
                 } else {
-                    let left = max(x.0, other.segments[y].0);
-                    let right = min(x.1, other.segments[y].1);
+                    let left = max(x.0.clone(), other.segments[y].0.clone());
+                    let right = min(x.1.clone(), other.segments[y].1.clone());
                     if left <= right {
                         output.segments.push((left, right));
                     }
@@ -123,15 +131,15 @@ impl Span {
 
     pub fn is_disjoint(&self, other: &Self) -> bool {
         let mut segments = self.segments.clone();
-        segments.extend(other.segments.iter());
-        segments.sort_by_key(|&a| a.0);
+        segments.extend(other.segments.iter().cloned());
+        segments.sort_by_key(|a| a.0.clone());
         let mut index = 0;
         for i in 1..segments.len() {
             if segments[index].1 >= segments[i].0 {
                 return false;
             } else {
                 index += 1;
-                segments[index] = segments[i];
+                segments[index] = segments[i].clone();
             }
         }
         true
@@ -242,13 +250,13 @@ impl PartialEq for Interval {
     }
 }
 
-impl From<Span> for Interval {
-    fn from(span: Span) -> Self {
+impl<INT: Integer + Clone + FromPrimitive + Into<f64>> From<Span<INT>> for Interval {
+    fn from(span: Span<INT>) -> Self {
         Interval {
             segments: span
                 .segments
                 .into_iter()
-                .map(|segment| (true, segment.0 as f64, segment.1 as f64, true))
+                .map(|segment| (true, segment.0.into(), segment.1.into(), true))
                 .collect::<Vec<_>>(),
         }
     }
