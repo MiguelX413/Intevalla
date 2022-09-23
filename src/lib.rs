@@ -284,7 +284,7 @@ impl<FLOAT: Float> PartialEq for Interval<FLOAT> {
     }
 }
 
-impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span<INT>>
+/*impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span<INT>>
     for Interval<FLOAT>
 {
     fn from(span: Span<INT>) -> Self {
@@ -295,6 +295,28 @@ impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span
                 .map(|segment| (true, segment.0.into(), segment.1.into(), true))
                 .collect::<Vec<_>>(),
         }
+    }
+}*/
+
+impl<INT: Integer + Clone + FromPrimitive + TryInto<FLOAT>, FLOAT: Float> TryFrom<Span<INT>>
+    for Interval<FLOAT>
+{
+    type Error = <INT as TryInto<FLOAT>>::Error;
+
+    fn try_from(span: Span<INT>) -> Result<Self, Self::Error> {
+        Ok(Interval {
+            segments: span
+                .segments
+                .into_iter()
+                .map(
+                    |segment| match (true, segment.0.try_into(), segment.1.try_into(), true) {
+                        (a, Ok(b), Ok(c), d) => Ok((a, b, c, d)),
+                        (_, Err(b), _, _) => Err(b),
+                        (_, _, Err(c), _) => Err(c),
+                    },
+                )
+                .collect::<Result<Vec<_>, Self::Error>>()?,
+        })
     }
 }
 
