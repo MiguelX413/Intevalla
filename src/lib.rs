@@ -1,7 +1,38 @@
-use num::{FromPrimitive, Integer};
+use num::{Float, FromPrimitive, Integer};
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Display, Formatter};
 use std::hash::{Hash, Hasher};
+
+trait IntoHashable {
+    type Hashable: Hash;
+    fn to_hashable(self) -> Self::Hashable;
+}
+
+impl IntoHashable for f64 {
+    type Hashable = u64;
+
+    fn to_hashable(self) -> Self::Hashable {
+        self.to_bits()
+    }
+}
+
+impl IntoHashable for f32 {
+    type Hashable = u32;
+
+    fn to_hashable(self) -> Self::Hashable {
+        self.to_bits()
+    }
+}
+
+/*
+impl<T: Hash> IntoHashable for T {
+    type Hashable = T;
+
+    fn to_hashable(self) -> Self::Hashable {
+        self
+    }
+}
+*/
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub enum Error {
@@ -165,11 +196,14 @@ impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
     }
 }
 
-fn interval_segment_cmp(a: &(bool, f64, f64, bool), b: &(bool, f64, f64, bool)) -> Ordering {
+fn interval_segment_cmp<FLOAT: Float>(
+    a: &(bool, FLOAT, FLOAT, bool),
+    b: &(bool, FLOAT, FLOAT, bool),
+) -> Ordering {
     (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap()
 }
 
-fn merge_interval_segments(segments: &mut Vec<(bool, f64, f64, bool)>) {
+fn merge_interval_segments<FLOAT: Float>(segments: &mut Vec<(bool, FLOAT, FLOAT, bool)>) {
     segments.sort_by(interval_segment_cmp);
     let mut index = 0;
     for i in 1..segments.len() {
@@ -193,16 +227,16 @@ fn merge_interval_segments(segments: &mut Vec<(bool, f64, f64, bool)>) {
     segments.truncate(index + 1);
 }
 
-fn validate_interval_segment(segment: &(bool, f64, f64, bool)) -> bool {
+fn validate_interval_segment<FLOAT: Float>(segment: &(bool, FLOAT, FLOAT, bool)) -> bool {
     (segment.1 < segment.2) | ((segment.1 == segment.2) & segment.0 & segment.3)
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Interval {
-    pub(crate) segments: Vec<(bool, f64, f64, bool)>,
+pub struct Interval<FLOAT: Float> {
+    pub(crate) segments: Vec<(bool, FLOAT, FLOAT, bool)>,
 }
 
-impl Display for Interval {
+impl<FLOAT: Float + Display> Display for Interval<FLOAT> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
             Some((&first, elements)) => {
@@ -233,24 +267,26 @@ impl Display for Interval {
     }
 }
 
-impl Hash for Interval {
+impl<FLOAT: Float + IntoHashable> Hash for Interval<FLOAT> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         (self
             .segments
             .iter()
-            .map(|&f| (f.0, f.1.to_bits(), f.2.to_bits(), f.3))
+            .map(|&f| (f.0, f.1.to_hashable(), f.2.to_hashable(), f.3))
             .collect::<Vec<_>>(),)
             .hash(state)
     }
 }
 
-impl PartialEq for Interval {
+impl<FLOAT: Float> PartialEq for Interval<FLOAT> {
     fn eq(&self, other: &Self) -> bool {
         self.segments == other.segments
     }
 }
 
-impl<INT: Integer + Clone + FromPrimitive + Into<f64>> From<Span<INT>> for Interval {
+impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span<INT>>
+    for Interval<FLOAT>
+{
     fn from(span: Span<INT>) -> Self {
         Interval {
             segments: span
@@ -262,9 +298,9 @@ impl<INT: Integer + Clone + FromPrimitive + Into<f64>> From<Span<INT>> for Inter
     }
 }
 
-impl Interval {
+impl<FLOAT: Float> Interval<FLOAT> {
     pub fn try_new(
-        segments: impl IntoIterator<Item = (bool, f64, f64, bool)>,
+        segments: impl IntoIterator<Item = (bool, FLOAT, FLOAT, bool)>,
     ) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
@@ -289,11 +325,11 @@ impl Interval {
         Ok(Self { segments: output })
     }
 
-    pub fn segments(&self) -> &[(bool, f64, f64, bool)] {
+    pub fn segments(&self) -> &[(bool, FLOAT, FLOAT, bool)] {
         &self.segments
     }
 
-    pub fn contains(&self, &item: &f64) -> bool {
+    pub fn contains(&self, &item: &FLOAT) -> bool {
         self.segments.iter().any(|&f| {
             ((f.1 < item) & (item < f.2)) | (((item == f.1) & f.0) | ((item == f.2) & f.3))
         })
@@ -303,7 +339,7 @@ impl Interval {
         if other.segments.is_empty() {
             return self;
         }
-        let mut output = Self::default();
+        let mut output = Self { segments: vec![] };
         let mut next_bound = 0;
         let mut bottom_bound;
         let mut temp_left_bound;
@@ -341,7 +377,7 @@ impl Interval {
     }
 
     pub fn intersection(&self, other: Self) -> Self {
-        let mut output = Self::default();
+        let mut output = Self { segments: vec![] };
         let mut next_bound = 0;
         let mut bottom_bound;
         for &x in &self.segments {
