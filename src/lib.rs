@@ -43,7 +43,7 @@ pub enum Error {
 
 fn merge_span_segments<INT: Integer + Clone + FromPrimitive>(segments: &mut Vec<(INT, INT)>) {
     let one = INT::from_u8(1).unwrap();
-    segments.sort_by_key(|a| a.0.clone());
+    segments.sort_by(|a, b| a.0.cmp(&b.0));
     let mut index = 0;
     for i in 1..segments.len() {
         if segments[index].1 >= segments[i].0.clone() - one.clone() {
