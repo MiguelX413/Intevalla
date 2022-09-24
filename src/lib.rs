@@ -5,13 +5,13 @@ use std::hash::{Hash, Hasher};
 
 trait IntoHashable {
     type Hashable: Hash;
-    fn to_hashable(self) -> Self::Hashable;
+    fn into_hashable(self) -> Self::Hashable;
 }
 
 impl IntoHashable for f64 {
     type Hashable = u64;
 
-    fn to_hashable(self) -> Self::Hashable {
+    fn into_hashable(self) -> Self::Hashable {
         self.to_bits()
     }
 }
@@ -19,7 +19,7 @@ impl IntoHashable for f64 {
 impl IntoHashable for f32 {
     type Hashable = u32;
 
-    fn to_hashable(self) -> Self::Hashable {
+    fn into_hashable(self) -> Self::Hashable {
         self.to_bits()
     }
 }
@@ -272,7 +272,7 @@ impl<FLOAT: Float + IntoHashable> Hash for Interval<FLOAT> {
         (self
             .segments
             .iter()
-            .map(|&f| (f.0, f.1.to_hashable(), f.2.to_hashable(), f.3))
+            .map(|&f| (f.0, f.1.into_hashable(), f.2.into_hashable(), f.3))
             .collect::<Vec<_>>(),)
             .hash(state)
     }
