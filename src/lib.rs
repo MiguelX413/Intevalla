@@ -41,9 +41,19 @@ pub enum Error {
     ContainInf,
 }
 
+fn interval_segment_sort<FLOAT: Float>(
+    a: &(bool, FLOAT, FLOAT, bool),
+    b: &(bool, FLOAT, FLOAT, bool),
+) -> Ordering {
+    (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap()
+}
+fn span_segment_sort<INT: Integer>(a: &(INT, INT), b: &(INT, INT)) -> Ordering {
+    a.0.cmp(&b.0)
+}
+
 fn merge_span_segments<INT: Integer + Clone + FromPrimitive>(segments: &mut Vec<(INT, INT)>) {
     let one = INT::from_u8(1).unwrap();
-    segments.sort_by(|a, b| a.0.cmp(&b.0));
+    segments.sort_by(span_segment_sort);
     let mut index = 0;
     for i in 1..segments.len() {
         if segments[index].1 >= segments[i].0.clone() - one.clone() {
@@ -163,7 +173,7 @@ impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
     pub fn is_disjoint(&self, other: &Self) -> bool {
         let mut segments = self.segments.clone();
         segments.extend(other.segments.iter().cloned());
-        segments.sort_by_key(|a| a.0.clone());
+        segments.sort_by(span_segment_sort);
         let mut index = 0;
         for i in 1..segments.len() {
             if segments[index].1 >= segments[i].0 {
@@ -196,15 +206,8 @@ impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
     }
 }
 
-fn interval_segment_cmp<FLOAT: Float>(
-    a: &(bool, FLOAT, FLOAT, bool),
-    b: &(bool, FLOAT, FLOAT, bool),
-) -> Ordering {
-    (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap()
-}
-
 fn merge_interval_segments<FLOAT: Float>(segments: &mut Vec<(bool, FLOAT, FLOAT, bool)>) {
-    segments.sort_by(interval_segment_cmp);
+    segments.sort_by(interval_segment_sort);
     let mut index = 0;
     for i in 1..segments.len() {
         if (segments[index].2 > segments[i].1)
@@ -416,7 +419,7 @@ impl<FLOAT: Float> Interval<FLOAT> {
     pub fn is_disjoint(&self, other: &Self) -> bool {
         let mut segments = self.segments.clone();
         segments.extend(other.segments.iter());
-        segments.sort_by(interval_segment_cmp);
+        segments.sort_by(interval_segment_sort);
         let mut index = 0;
         for i in 1..segments.len() {
             if (segments[index].2 > segments[i].1)
