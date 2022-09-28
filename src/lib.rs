@@ -47,6 +47,7 @@ fn interval_segment_sort<FLOAT: Float>(
 ) -> Ordering {
     (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap()
 }
+
 fn span_segment_sort<INT: Integer>(a: &(INT, INT), b: &(INT, INT)) -> Ordering {
     a.0.cmp(&b.0)
 }
