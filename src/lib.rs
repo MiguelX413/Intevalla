@@ -288,8 +288,10 @@ impl<FLOAT: Float> PartialEq for Interval<FLOAT> {
     }
 }
 
-impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span<INT>>
-    for Interval<FLOAT>
+impl<INT, FLOAT> From<Span<INT>> for Interval<FLOAT>
+where
+    INT: Integer + Clone + FromPrimitive + Into<FLOAT>,
+    FLOAT: Float,
 {
     fn from(span: Span<INT>) -> Self {
         Interval {
@@ -302,8 +304,10 @@ impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span
     }
 }
 
-impl<INT: Integer + Copy + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<&Span<INT>>
-    for Interval<FLOAT>
+impl<INT, FLOAT> From<&Span<INT>> for Interval<FLOAT>
+where
+    INT: Integer + Copy + FromPrimitive + Into<FLOAT>,
+    FLOAT: Float,
 {
     fn from(span: &Span<INT>) -> Self {
         Interval {
