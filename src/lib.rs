@@ -294,7 +294,7 @@ where
     FLOAT: Float,
 {
     fn from(span: Span<INT>) -> Self {
-        Interval {
+        Self {
             segments: span
                 .segments
                 .into_iter()
@@ -310,7 +310,7 @@ where
     FLOAT: Float,
 {
     fn from(span: &Span<INT>) -> Self {
-        Interval {
+        Self {
             segments: span
                 .segments
                 .iter()
