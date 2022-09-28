@@ -301,6 +301,20 @@ impl<INT: Integer + Clone + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<Span
     }
 }
 
+impl<INT: Integer + Copy + FromPrimitive + Into<FLOAT>, FLOAT: Float> From<&Span<INT>>
+    for Interval<FLOAT>
+{
+    fn from(span: &Span<INT>) -> Self {
+        Interval {
+            segments: span
+                .segments
+                .iter()
+                .map(|segment| (true, segment.0.into(), segment.1.into(), true))
+                .collect::<Vec<_>>(),
+        }
+    }
+}
+
 impl<FLOAT: Float> Interval<FLOAT> {
     pub fn try_new(
         segments: impl IntoIterator<Item = (bool, FLOAT, FLOAT, bool)>,
