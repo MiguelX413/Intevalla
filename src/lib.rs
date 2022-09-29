@@ -194,9 +194,9 @@ where
                 if x.1 < y.0 {
                     break;
                 }
-                let leftmost_bound = min(&x.0, &y.0);
-                let rightmost_bound = max(&x.1, &y.1);
-                if leftmost_bound <= rightmost_bound {
+                let left_bound = max(&x.0, &y.0);
+                let right_bound = min(&x.1, &y.1);
+                if left_bound <= right_bound {
                     return false;
                 }
                 pivot += 1;
@@ -464,21 +464,21 @@ impl<FLOAT: Float> Interval<FLOAT> {
                 if (x.2 < y.1) | ((x.2 == y.1) & (!x.3 | !y.0)) {
                     break;
                 }
-                let leftmost_bound = if (x.1 < y.1) | ((x.1 == y.1) & x.0) {
+                let left_bound = if (x.1 > y.1) | ((x.1 == y.1) & !x.0) {
                     (x.0, x.1)
                 } else {
                     (y.0, y.1)
                 };
-                let rightmost_bound = if (x.2 > y.2) | ((x.2 == y.2) & x.3) {
+                let right_bound = if (x.2 < y.2) | ((x.2 == y.2) & !x.3) {
                     (x.2, x.3)
                 } else {
                     (y.2, y.3)
                 };
                 if validate_interval_segment(&(
-                    leftmost_bound.0,
-                    leftmost_bound.1,
-                    rightmost_bound.0,
-                    rightmost_bound.1,
+                    left_bound.0,
+                    left_bound.1,
+                    right_bound.0,
+                    right_bound.1,
                 )) {
                     return false;
                 }
