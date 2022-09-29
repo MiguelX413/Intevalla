@@ -175,10 +175,10 @@ where
                 if x.1 < other.segments[y].0 {
                     break;
                 } else {
-                    let left = max(x.0.clone(), other.segments[y].0.clone());
-                    let right = min(x.1.clone(), other.segments[y].1.clone());
+                    let left = max(&x.0, &other.segments[y].0);
+                    let right = min(&x.1, &other.segments[y].1);
                     if left <= right {
-                        output.segments.push((left, right));
+                        output.segments.push((left.clone(), right.clone()));
                     }
                     next_bound = y;
                 }
