@@ -1,6 +1,6 @@
-use num::{Float, FromPrimitive, Integer};
+use num::{Float, Integer};
 use std::cmp::{max, min, Ordering};
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
 trait IntoHashable {
@@ -52,8 +52,12 @@ fn span_segment_sort<INT: Integer>(a: &(INT, INT), b: &(INT, INT)) -> Ordering {
     a.0.cmp(&b.0)
 }
 
-fn merge_span_segments<INT: Integer + Clone + FromPrimitive>(segments: &mut Vec<(INT, INT)>) {
-    let one = INT::from_u8(1).unwrap();
+fn merge_span_segments<INT: Integer + Clone>(segments: &mut Vec<(INT, INT)>)
+where
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
+{
+    let one: INT = 1.try_into().unwrap();
     segments.sort_by(span_segment_sort);
     let mut index = 0;
     for i in 1..segments.len() {
@@ -68,11 +72,19 @@ fn merge_span_segments<INT: Integer + Clone + FromPrimitive>(segments: &mut Vec<
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
-pub struct Span<INT: Integer + Clone + FromPrimitive> {
+pub struct Span<INT: Integer + Clone>
+where
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
+{
     pub(crate) segments: Vec<(INT, INT)>,
 }
 
-impl<INT: Integer + Clone + Display + FromPrimitive> Display for Span<INT> {
+impl<INT: Integer + Clone + Display> Display for Span<INT>
+where
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
             Some((first, elements)) => {
@@ -89,7 +101,11 @@ impl<INT: Integer + Clone + Display + FromPrimitive> Display for Span<INT> {
     }
 }
 
-impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
+impl<INT: Integer + Clone> Span<INT>
+where
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
+{
     pub fn try_new(segments: impl IntoIterator<Item = (INT, INT)>) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
@@ -115,7 +131,7 @@ impl<INT: Integer + Clone + FromPrimitive> Span<INT> {
     }
 
     pub fn difference(self, other: Self) -> Self {
-        let one = INT::from_u8(1).unwrap();
+        let one: INT = 1.try_into().unwrap();
         if other.segments.is_empty() {
             return self;
         }
@@ -290,8 +306,10 @@ impl<FLOAT: Float> PartialEq for Interval<FLOAT> {
 
 impl<INT, FLOAT> From<Span<INT>> for Interval<FLOAT>
 where
-    INT: Integer + Clone + FromPrimitive + Into<FLOAT>,
+    INT: Integer + Clone + Into<FLOAT>,
     FLOAT: Float,
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
 {
     fn from(span: Span<INT>) -> Self {
         Self {
@@ -306,8 +324,10 @@ where
 
 impl<INT, FLOAT> From<&Span<INT>> for Interval<FLOAT>
 where
-    INT: Integer + Copy + FromPrimitive + Into<FLOAT>,
+    INT: Integer + Copy + Into<FLOAT>,
     FLOAT: Float,
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
 {
     fn from(span: &Span<INT>) -> Self {
         Self {
