@@ -188,16 +188,18 @@ where
     }
 
     pub fn is_disjoint(&self, other: &Self) -> bool {
-        let mut segments = self.segments.clone();
-        segments.extend(other.segments.iter().cloned());
-        segments.sort_by(span_segment_sort);
-        let mut index = 0;
-        for i in 1..segments.len() {
-            if segments[index].1 >= segments[i].0 {
-                return false;
-            } else {
-                index += 1;
-                segments[index] = segments[i].clone();
+        let mut pivot = 0;
+        for x in &self.segments {
+            for y in &other.segments[pivot..] {
+                if x.1 < y.0 {
+                    break;
+                }
+                let leftmost_bound = min(&x.0, &y.0);
+                let rightmost_bound = max(&x.1, &y.1);
+                if leftmost_bound <= rightmost_bound {
+                    return false;
+                }
+                pivot += 1;
             }
         }
         true
@@ -456,20 +458,31 @@ impl<FLOAT: Float> Interval<FLOAT> {
     }
 
     pub fn is_disjoint(&self, other: &Self) -> bool {
-        let mut segments = self.segments.clone();
-        segments.extend(other.segments.iter());
-        segments.sort_by(interval_segment_sort);
-        let mut index = 0;
-        for i in 1..segments.len() {
-            if (segments[index].2 > segments[i].1)
-                | ((segments[index].2 == segments[i].1)
-            // check for strict overlap
-                    & (segments[index].3 & segments[i].0))
-            {
-                return false;
-            } else {
-                index += 1;
-                segments[index] = segments[i];
+        let mut pivot = 0;
+        for x in &self.segments {
+            for y in &other.segments[pivot..] {
+                if (x.2 < y.1) | ((x.2 == y.1) & (!x.3 | !y.0)) {
+                    break;
+                }
+                let leftmost_bound = if (x.1 < y.1) | ((x.1 == y.1) & x.0) {
+                    (x.0, x.1)
+                } else {
+                    (y.0, y.1)
+                };
+                let rightmost_bound = if (x.2 > y.2) | ((x.2 == y.2) & x.3) {
+                    (x.2, x.3)
+                } else {
+                    (y.2, y.3)
+                };
+                if validate_interval_segment(&(
+                    leftmost_bound.0,
+                    leftmost_bound.1,
+                    rightmost_bound.0,
+                    rightmost_bound.1,
+                )) {
+                    return false;
+                }
+                pivot += 1;
             }
         }
         true
