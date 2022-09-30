@@ -3,6 +3,31 @@ use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+pub struct SpanWrapper<T: Integer + Clone>(Span<T>)
+where
+    u8: TryInto<T>,
+    <u8 as TryInto<T>>::Error: Debug;
+
+impl<T: Integer + Clone> From<Span<T>> for SpanWrapper<T>
+where
+    u8: TryInto<T>,
+    <u8 as TryInto<T>>::Error: Debug,
+{
+    fn from(span: Span<T>) -> Self {
+        SpanWrapper(span)
+    }
+}
+
+impl<T: Integer + Clone> From<SpanWrapper<T>> for Span<T>
+where
+    u8: TryInto<T>,
+    <u8 as TryInto<T>>::Error: Debug,
+{
+    fn from(span_wrapper: SpanWrapper<T>) -> Self {
+        span_wrapper.0
+    }
+}
+
 trait IntoHashable {
     type Hashable: Hash;
     fn into_hashable(self) -> Self::Hashable;
@@ -344,6 +369,26 @@ where
                 .map(|segment| (true, segment.0.into(), segment.1.into(), true))
                 .collect::<Vec<_>>(),
         }
+    }
+}
+
+impl<INT: Integer + Clone, FLOAT: Float> TryFrom<SpanWrapper<INT>> for Interval<FLOAT>
+where
+    INT: TryInto<FLOAT>,
+    u8: TryInto<INT>,
+    <u8 as TryInto<INT>>::Error: Debug,
+{
+    type Error = <INT as TryInto<FLOAT>>::Error;
+
+    fn try_from(span_wrapper: SpanWrapper<INT>) -> Result<Self, Self::Error> {
+        Ok(Self {
+            segments: span_wrapper
+                .0
+                .segments
+                .into_iter()
+                .map(|segment| Ok((true, segment.0.try_into()?, segment.1.try_into()?, true)))
+                .collect::<Result<Vec<_>, _>>()?,
+        })
     }
 }
 
