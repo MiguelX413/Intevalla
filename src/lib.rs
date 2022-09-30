@@ -80,8 +80,9 @@ where
     pub(crate) segments: Vec<(INT, INT)>,
 }
 
-impl<INT: Integer + Clone + Display> Display for Span<INT>
+impl<INT: Integer + Clone> Display for Span<INT>
 where
+    INT: Display,
     u8: TryInto<INT>,
     <u8 as TryInto<INT>>::Error: Debug,
 {
@@ -258,7 +259,10 @@ pub struct Interval<FLOAT: Float> {
     pub(crate) segments: Vec<(bool, FLOAT, FLOAT, bool)>,
 }
 
-impl<FLOAT: Float + Display> Display for Interval<FLOAT> {
+impl<FLOAT: Float> Display for Interval<FLOAT>
+where
+    FLOAT: Display,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
             Some((&first, elements)) => {
@@ -289,7 +293,10 @@ impl<FLOAT: Float + Display> Display for Interval<FLOAT> {
     }
 }
 
-impl<FLOAT: Float + IntoHashable> Hash for Interval<FLOAT> {
+impl<FLOAT: Float> Hash for Interval<FLOAT>
+where
+    FLOAT: IntoHashable,
+{
     fn hash<H: Hasher>(&self, state: &mut H) {
         (self
             .segments
@@ -306,10 +313,9 @@ impl<FLOAT: Float> PartialEq for Interval<FLOAT> {
     }
 }
 
-impl<INT, FLOAT> From<Span<INT>> for Interval<FLOAT>
+impl<INT: Integer + Clone, FLOAT: Float> From<Span<INT>> for Interval<FLOAT>
 where
-    INT: Integer + Clone + Into<FLOAT>,
-    FLOAT: Float,
+    INT: Into<FLOAT>,
     u8: TryInto<INT>,
     <u8 as TryInto<INT>>::Error: Debug,
 {
@@ -324,10 +330,9 @@ where
     }
 }
 
-impl<INT, FLOAT> From<&Span<INT>> for Interval<FLOAT>
+impl<INT: Integer, FLOAT: Float> From<&Span<INT>> for Interval<FLOAT>
 where
-    INT: Integer + Copy + Into<FLOAT>,
-    FLOAT: Float,
+    INT: Copy + Into<FLOAT>,
     u8: TryInto<INT>,
     <u8 as TryInto<INT>>::Error: Debug,
 {
