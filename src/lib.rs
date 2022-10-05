@@ -321,12 +321,10 @@ where
     FLOAT: IntoHashable,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        (self
-            .segments
+        self.segments
             .iter()
-            .map(|&f| (f.0, f.1.into_hashable(), f.2.into_hashable(), f.3))
-            .collect::<Vec<_>>(),)
-            .hash(state)
+            .map(|f| (f.0, f.1.into_hashable(), f.2.into_hashable(), f.3))
+            .for_each(|f| f.hash(state))
     }
 }
 
