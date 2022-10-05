@@ -41,6 +41,28 @@ pub enum Error {
     ContainInf,
 }
 
+impl Display for Error {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Error::SegmentPointNaN => {
+                    "Segment points cannot be NaN"
+                }
+                Error::StartPointGreaterThanEndPoint => {
+                    "Start point of segment cannot be greater than its end point"
+                }
+                Error::ContainInf => {
+                    "Interval cannot contain inf"
+                }
+            }
+        )
+    }
+}
+
+impl std::error::Error for Error {}
+
 fn interval_segment_sort<FLOAT: Float>(
     a: &(bool, FLOAT, FLOAT, bool),
     b: &(bool, FLOAT, FLOAT, bool),
