@@ -4,6 +4,9 @@ use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 trait IntoHashable {
     type Hashable: Hash;
     fn into_hashable(self) -> Self::Hashable;
@@ -95,6 +98,7 @@ where
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Span<INT: Integer + Clone>
 where
     u8: TryInto<INT>,
@@ -278,6 +282,7 @@ fn validate_interval_segment<FLOAT: Float>(segment: &(bool, FLOAT, FLOAT, bool))
 }
 
 #[derive(Clone, Debug, Default)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Interval<FLOAT: Float> {
     pub(crate) segments: Vec<(bool, FLOAT, FLOAT, bool)>,
 }
