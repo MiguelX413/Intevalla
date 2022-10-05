@@ -1,4 +1,5 @@
-use num::{Float, Integer};
+use num_integer::Integer;
+use num_traits::Float;
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
