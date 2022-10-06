@@ -4,6 +4,9 @@ use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
+#[cfg(feature = "serde")]
+use serde::{ser::SerializeSeq, Deserialize, Serialize, Serializer};
+
 trait IntoHashable {
     type Hashable: Hash;
     fn into_hashable(self) -> Self::Hashable;
@@ -95,6 +98,7 @@ where
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Span<INT: Integer + Clone>
 where
     u8: TryInto<INT>,
@@ -281,6 +285,71 @@ fn validate_interval_segment<FLOAT: Float>(segment: &(bool, FLOAT, FLOAT, bool))
 pub struct Interval<FLOAT: Float> {
     pub(crate) segments: Vec<(bool, FLOAT, FLOAT, bool)>,
 }
+
+#[cfg(feature = "serde")]
+#[derive(Serialize, Deserialize)]
+enum SerializableFloat<FLOAT: Float> {
+    Infinity,
+    NegInfinity,
+    NotInf(FLOAT),
+}
+
+#[cfg(feature = "serde")]
+impl<FLOAT: Float> From<FLOAT> for SerializableFloat<FLOAT> {
+    fn from(float: FLOAT) -> Self {
+        if float == FLOAT::infinity() {
+            return Self::Infinity;
+        }
+        if float == FLOAT::neg_infinity() {
+            return Self::NegInfinity;
+        }
+        Self::NotInf(float)
+    }
+}
+
+/*
+#[cfg(feature = "serde")]
+impl<FLOAT: Float> From<SerializableFloat<FLOAT>> for FLOAT {
+    fn from(serializable_float: SerializableFloat<FLOAT>) -> Self {
+        match serializable_float {
+            SerializableFloat::Infinity => {FLOAT::infinity()}
+            SerializableFloat::NegInfinity => {FLOAT::neg_infinity()}
+            SerializableFloat::NotInf(float) => {float}
+        }
+    }
+}
+*/
+
+#[cfg(feature = "serde")]
+impl<FLOAT: Float> Serialize for Interval<FLOAT>
+where
+    FLOAT: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        let mut seq = serializer.serialize_seq(Some(self.segments.len()))?;
+        for segment in &self.segments {
+            seq.serialize_element(&(
+                segment.0,
+                SerializableFloat::from(segment.1),
+                SerializableFloat::from(segment.2),
+                segment.3,
+            ))?;
+        }
+        seq.end()
+    }
+}
+
+/*
+#[cfg(feature = "serde")]
+impl<FLOAT: Float> Deserialize for Interval<FLOAT> {
+    fn deserialize<D>(deserializer: D) -> Result<Self, serde::de::Error> where D: Deserializer<'de> {
+        todo!()
+    }
+}
+*/
 
 impl<FLOAT: Float> Display for Interval<FLOAT>
 where
