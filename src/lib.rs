@@ -152,17 +152,19 @@ where
     <u8 as TryInto<Int>>::Error: Debug,
 {
     pub fn new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, NewSpanError> {
-        let mut output = segments
-            .into_iter()
-            .map(|f| {
-                if f.0 > f.1 {
-                    return Err(NewSpanError::StartPointGreaterThanEndPoint);
-                }
-                Ok(f)
-            })
-            .collect::<Result<Vec<_>, NewSpanError>>()?;
-        merge_span_segments(&mut output);
-        Ok(Self { segments: output })
+        let mut output = Self {
+            segments: segments
+                .into_iter()
+                .map(|f| {
+                    if f.0 > f.1 {
+                        return Err(NewSpanError::StartPointGreaterThanEndPoint);
+                    }
+                    Ok(f)
+                })
+                .collect::<Result<Vec<_>, NewSpanError>>()?,
+        };
+        merge_span_segments(&mut output.segments);
+        Ok(output)
     }
 
     pub fn new_unchecked(segments: impl IntoIterator<Item = (Int, Int)>) -> Self {
@@ -299,10 +301,12 @@ where
     }
 
     pub fn union_all(self, others: impl IntoIterator<Item = Self>) -> Self {
-        let mut x = self.segments;
-        x.extend(others.into_iter().flat_map(|f| f.segments));
-        merge_span_segments(&mut x);
-        Self { segments: x }
+        let mut output = self;
+        output
+            .segments
+            .extend(others.into_iter().flat_map(|f| f.segments));
+        merge_span_segments(&mut output.segments);
+        output
     }
 }
 
@@ -429,27 +433,29 @@ impl<Float: FloatT> Interval<Float> {
     pub fn new(
         segments: impl IntoIterator<Item = (bool, Float, Float, bool)>,
     ) -> Result<Self, NewIntervalError> {
-        let mut output = segments
-            .into_iter()
-            .filter_map(|f| {
-                if f.1.is_nan() | f.2.is_nan() {
-                    return Some(Err(NewIntervalError::SegmentPointNaN));
-                }
-                if f.1 > f.2 {
-                    return Some(Err(NewIntervalError::StartPointGreaterThanEndPoint));
-                }
-                if (f.1.is_infinite() & f.0) | (f.2.is_infinite() & f.3) {
-                    return Some(Err(NewIntervalError::ContainInf));
-                }
-                if (f.1 == f.2) & (!f.0 | !f.3) {
-                    return None;
-                }
-                Some(Ok(f))
-            })
-            .collect::<Result<Vec<_>, NewIntervalError>>()?;
+        let mut output = Self {
+            segments: segments
+                .into_iter()
+                .filter_map(|f| {
+                    if f.1.is_nan() | f.2.is_nan() {
+                        return Some(Err(NewIntervalError::SegmentPointNaN));
+                    }
+                    if f.1 > f.2 {
+                        return Some(Err(NewIntervalError::StartPointGreaterThanEndPoint));
+                    }
+                    if (f.1.is_infinite() & f.0) | (f.2.is_infinite() & f.3) {
+                        return Some(Err(NewIntervalError::ContainInf));
+                    }
+                    if (f.1 == f.2) & (!f.0 | !f.3) {
+                        return None;
+                    }
+                    Some(Ok(f))
+                })
+                .collect::<Result<Vec<_>, NewIntervalError>>()?,
+        };
 
-        merge_interval_segments(&mut output);
-        Ok(Self { segments: output })
+        merge_interval_segments(&mut output.segments);
+        Ok(output)
     }
 
     pub fn new_unchecked(segments: impl IntoIterator<Item = (bool, Float, Float, bool)>) -> Self {
@@ -592,10 +598,12 @@ impl<Float: FloatT> Interval<Float> {
     }
 
     pub fn union_all(self, others: impl IntoIterator<Item = Self>) -> Self {
-        let mut x = self.segments;
-        x.extend(others.into_iter().flat_map(|f| f.segments));
-        merge_interval_segments(&mut x);
-        Self { segments: x }
+        let mut output = self;
+        output
+            .segments
+            .extend(others.into_iter().flat_map(|f| f.segments));
+        merge_interval_segments(&mut output.segments);
+        output
     }
 }
 
