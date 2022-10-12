@@ -229,7 +229,7 @@ where
         true
     }
 
-    /// Returns `true` if the span is a subset of another,
+    /// Returns `true` if the span is a subspan of another,
     /// when `other` ∪ `self` == `other`.
     ///
     /// # Examples
@@ -239,13 +239,13 @@ where
     /// let sup = Span::try_new([(1, 10)]).unwrap();
     /// let mut sub = Span::try_new([]).unwrap();
     ///
-    /// assert_eq!(sub.is_subset(&sup), true);
+    /// assert_eq!(sub.is_subspan(&sup), true);
     /// sub = sub.union(Span::try_new([(1, 3)]).unwrap());
-    /// assert_eq!(sub.is_subset(&sup), true);
+    /// assert_eq!(sub.is_subspan(&sup), true);
     /// sub = sub.union(Span::try_new([(8, 20)]).unwrap());
-    /// assert_eq!(sub.is_subset(&sup), false);
+    /// assert_eq!(sub.is_subspan(&sup), false);
     /// ```
-    pub fn is_subset(&self, other: &Self) -> bool {
+    pub fn is_subspan(&self, other: &Self) -> bool {
         let mut pivot = 0;
         self.segments.iter().all(|x| {
             for y in &other.segments[pivot..] {
@@ -261,8 +261,8 @@ where
         })
     }
 
-    pub fn is_superset(&self, other: &Self) -> bool {
-        other.is_subset(self)
+    pub fn is_superspan(&self, other: &Self) -> bool {
+        other.is_subspan(self)
     }
 
     pub fn union(self, other: Self) -> Self {
@@ -542,12 +542,12 @@ impl<FLOAT: Float> Interval<FLOAT> {
         true
     }
 
-    pub fn is_subset(&self, other: &Self) -> bool {
+    pub fn is_subinterval(&self, other: &Self) -> bool {
         self == &self.clone().union(other.clone())
     }
 
-    pub fn is_superset(&self, other: &Self) -> bool {
-        other.is_subset(self)
+    pub fn is_superinterval(&self, other: &Self) -> bool {
+        other.is_subinterval(self)
     }
 
     pub fn union(self, other: Self) -> Self {
