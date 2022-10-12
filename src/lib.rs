@@ -1,5 +1,5 @@
 use num_integer::Integer;
-use num_traits::Float;
+use num_traits::Float as FloatT;
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -64,23 +64,23 @@ impl Display for Error {
 
 impl std::error::Error for Error {}
 
-fn interval_segment_sort<FLOAT: Float>(
-    a: &(bool, FLOAT, FLOAT, bool),
-    b: &(bool, FLOAT, FLOAT, bool),
+fn interval_segment_sort<Float: FloatT>(
+    a: &(bool, Float, Float, bool),
+    b: &(bool, Float, Float, bool),
 ) -> Ordering {
     (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap()
 }
 
-fn span_segment_sort<INT: Integer>(a: &(INT, INT), b: &(INT, INT)) -> Ordering {
+fn span_segment_sort<Int: Integer>(a: &(Int, Int), b: &(Int, Int)) -> Ordering {
     a.0.cmp(&b.0)
 }
 
-fn merge_span_segments<INT: Integer + Clone>(segments: &mut Vec<(INT, INT)>)
+fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>)
 where
-    u8: TryInto<INT>,
-    <u8 as TryInto<INT>>::Error: Debug,
+    u8: TryInto<Int>,
+    <u8 as TryInto<Int>>::Error: Debug,
 {
-    let one: INT = 1.try_into().unwrap();
+    let one: Int = 1.try_into().unwrap();
     segments.sort_by(span_segment_sort);
     let mut index = 0;
     for i in 1..segments.len() {
@@ -95,19 +95,19 @@ where
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
-pub struct Span<INT: Integer + Clone>
+pub struct Span<Int: Integer + Clone>
 where
-    u8: TryInto<INT>,
-    <u8 as TryInto<INT>>::Error: Debug,
+    u8: TryInto<Int>,
+    <u8 as TryInto<Int>>::Error: Debug,
 {
-    pub(crate) segments: Vec<(INT, INT)>,
+    pub(crate) segments: Vec<(Int, Int)>,
 }
 
-impl<INT: Integer + Clone> Display for Span<INT>
+impl<Int: Integer + Clone> Display for Span<Int>
 where
-    INT: Display,
-    u8: TryInto<INT>,
-    <u8 as TryInto<INT>>::Error: Debug,
+    Int: Display,
+    u8: TryInto<Int>,
+    <u8 as TryInto<Int>>::Error: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
@@ -125,12 +125,12 @@ where
     }
 }
 
-impl<INT: Integer + Clone> Span<INT>
+impl<Int: Integer + Clone> Span<Int>
 where
-    u8: TryInto<INT>,
-    <u8 as TryInto<INT>>::Error: Debug,
+    u8: TryInto<Int>,
+    <u8 as TryInto<Int>>::Error: Debug,
 {
-    pub fn try_new(segments: impl IntoIterator<Item = (INT, INT)>) -> Result<Self, Error> {
+    pub fn try_new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
             .map(|f| {
@@ -144,18 +144,18 @@ where
         Ok(Self { segments: output })
     }
 
-    pub fn segments(&self) -> &[(INT, INT)] {
+    pub fn segments(&self) -> &[(Int, Int)] {
         &self.segments
     }
 
-    pub fn contains(&self, item: &INT) -> bool {
+    pub fn contains(&self, item: &Int) -> bool {
         self.segments
             .iter()
             .any(|f| (&f.0 <= item) & (item <= &f.1))
     }
 
     pub fn difference(self, other: Self) -> Self {
-        let one: INT = 1.try_into().unwrap();
+        let one: Int = 1.try_into().unwrap();
         if other.segments.is_empty() {
             return self;
         }
@@ -277,7 +277,7 @@ where
     }
 }
 
-fn merge_interval_segments<FLOAT: Float>(segments: &mut Vec<(bool, FLOAT, FLOAT, bool)>) {
+fn merge_interval_segments<Float: FloatT>(segments: &mut Vec<(bool, Float, Float, bool)>) {
     segments.sort_by(interval_segment_sort);
     let mut index = 0;
     for i in 1..segments.len() {
@@ -301,18 +301,18 @@ fn merge_interval_segments<FLOAT: Float>(segments: &mut Vec<(bool, FLOAT, FLOAT,
     segments.truncate(index + 1);
 }
 
-fn validate_interval_segment<FLOAT: Float>(segment: &(bool, FLOAT, FLOAT, bool)) -> bool {
+fn validate_interval_segment<Float: FloatT>(segment: &(bool, Float, Float, bool)) -> bool {
     (segment.1 < segment.2) | ((segment.1 == segment.2) & segment.0 & segment.3)
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Interval<FLOAT: Float> {
-    pub(crate) segments: Vec<(bool, FLOAT, FLOAT, bool)>,
+pub struct Interval<Float: FloatT> {
+    pub(crate) segments: Vec<(bool, Float, Float, bool)>,
 }
 
-impl<FLOAT: Float> Display for Interval<FLOAT>
+impl<Float: FloatT> Display for Interval<Float>
 where
-    FLOAT: Display,
+    Float: Display,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
@@ -344,9 +344,9 @@ where
     }
 }
 
-impl<FLOAT: Float> Hash for Interval<FLOAT>
+impl<Float: FloatT> Hash for Interval<Float>
 where
-    FLOAT: IntoHashable,
+    Float: IntoHashable,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.segments
@@ -356,19 +356,19 @@ where
     }
 }
 
-impl<FLOAT: Float> PartialEq for Interval<FLOAT> {
+impl<Float: FloatT> PartialEq for Interval<Float> {
     fn eq(&self, other: &Self) -> bool {
         self.segments == other.segments
     }
 }
 
-impl<INT: Integer + Clone, FLOAT: Float> From<Span<INT>> for Interval<FLOAT>
+impl<Int: Integer + Clone, Float: FloatT> From<Span<Int>> for Interval<Float>
 where
-    INT: Into<FLOAT>,
-    u8: TryInto<INT>,
-    <u8 as TryInto<INT>>::Error: Debug,
+    Int: Into<Float>,
+    u8: TryInto<Int>,
+    <u8 as TryInto<Int>>::Error: Debug,
 {
-    fn from(span: Span<INT>) -> Self {
+    fn from(span: Span<Int>) -> Self {
         Self {
             segments: span
                 .segments
@@ -379,13 +379,13 @@ where
     }
 }
 
-impl<INT: Integer, FLOAT: Float> From<&Span<INT>> for Interval<FLOAT>
+impl<Int: Integer, Float: FloatT> From<&Span<Int>> for Interval<Float>
 where
-    INT: Copy + Into<FLOAT>,
-    u8: TryInto<INT>,
-    <u8 as TryInto<INT>>::Error: Debug,
+    Int: Copy + Into<Float>,
+    u8: TryInto<Int>,
+    <u8 as TryInto<Int>>::Error: Debug,
 {
-    fn from(span: &Span<INT>) -> Self {
+    fn from(span: &Span<Int>) -> Self {
         Self {
             segments: span
                 .segments
@@ -396,9 +396,9 @@ where
     }
 }
 
-impl<FLOAT: Float> Interval<FLOAT> {
+impl<Float: FloatT> Interval<Float> {
     pub fn try_new(
-        segments: impl IntoIterator<Item = (bool, FLOAT, FLOAT, bool)>,
+        segments: impl IntoIterator<Item = (bool, Float, Float, bool)>,
     ) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
@@ -423,11 +423,11 @@ impl<FLOAT: Float> Interval<FLOAT> {
         Ok(Self { segments: output })
     }
 
-    pub fn segments(&self) -> &[(bool, FLOAT, FLOAT, bool)] {
+    pub fn segments(&self) -> &[(bool, Float, Float, bool)] {
         &self.segments
     }
 
-    pub fn contains(&self, &item: &FLOAT) -> bool {
+    pub fn contains(&self, &item: &Float) -> bool {
         self.segments.iter().any(|&f| {
             ((f.1 < item) & (item < f.2)) | (((item == f.1) & f.0) | ((item == f.2) & f.3))
         })
