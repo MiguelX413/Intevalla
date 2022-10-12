@@ -48,13 +48,13 @@ impl Display for Error {
             f,
             "{}",
             match self {
-                Error::SegmentPointNaN => {
+                Self::SegmentPointNaN => {
                     "Segment points cannot be NaN"
                 }
-                Error::StartPointGreaterThanEndPoint => {
+                Self::StartPointGreaterThanEndPoint => {
                     "Start point of segment cannot be greater than its end point"
                 }
-                Error::ContainInf => {
+                Self::ContainInf => {
                     "Interval cannot contain inf"
                 }
             }
