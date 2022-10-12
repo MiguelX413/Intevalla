@@ -229,8 +229,36 @@ where
         true
     }
 
+    /// Returns `true` if the span is a subset of another,
+    /// when `other` ∪ `self` == `other`.
+    ///
+    /// # Examples
+    /// ```
+    /// use intervalla::Span;
+    ///
+    /// let sup = Span::try_new([(1, 10)]).unwrap();
+    /// let mut sub = Span::try_new([]).unwrap();
+    ///
+    /// assert_eq!(sub.is_subset(&sup), true);
+    /// sub = sub.union(Span::try_new([(1, 3)]).unwrap());
+    /// assert_eq!(sub.is_subset(&sup), true);
+    /// sub = sub.union(Span::try_new([(8, 20)]).unwrap());
+    /// assert_eq!(sub.is_subset(&sup), false);
+    /// ```
     pub fn is_subset(&self, other: &Self) -> bool {
-        self == &self.clone().union(other.clone())
+        let mut pivot = 0;
+        self.segments.iter().all(|x| {
+            for y in &other.segments[pivot..] {
+                if x.1 < y.0 {
+                    break;
+                }
+                if (min(&x.0, &y.0), max(&x.1, &y.1)) == (&y.0, &y.1) {
+                    return true;
+                }
+                pivot += 1;
+            }
+            false
+        })
     }
 
     pub fn is_superset(&self, other: &Self) -> bool {
