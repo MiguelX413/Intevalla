@@ -130,7 +130,7 @@ where
     u8: TryInto<Int>,
     <u8 as TryInto<Int>>::Error: Debug,
 {
-    pub fn try_new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, Error> {
+    pub fn new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, Error> {
         let mut output = segments
             .into_iter()
             .map(|f| {
@@ -142,6 +142,14 @@ where
             .collect::<Result<Vec<_>, Error>>()?;
         merge_span_segments(&mut output);
         Ok(Self { segments: output })
+    }
+
+    pub fn new_unchecked(segments: impl IntoIterator<Item = (Int, Int)>) -> Self {
+        let mut output = Self {
+            segments: segments.into_iter().collect(),
+        };
+        merge_span_segments(&mut output.segments);
+        output
     }
 
     pub fn segments(&self) -> &[(Int, Int)] {
@@ -236,13 +244,13 @@ where
     /// ```
     /// use intervalla::Span;
     ///
-    /// let sup = Span::try_new([(1, 10)]).unwrap();
-    /// let mut sub = Span::try_new([]).unwrap();
+    /// let sup = Span::new([(1, 10)]).unwrap();
+    /// let mut sub = Span::new([]).unwrap();
     ///
     /// assert_eq!(sub.is_subspan(&sup), true);
-    /// sub = sub.union(Span::try_new([(1, 3)]).unwrap());
+    /// sub = sub.union(Span::new([(1, 3)]).unwrap());
     /// assert_eq!(sub.is_subspan(&sup), true);
-    /// sub = sub.union(Span::try_new([(8, 20)]).unwrap());
+    /// sub = sub.union(Span::new([(8, 20)]).unwrap());
     /// assert_eq!(sub.is_subspan(&sup), false);
     /// ```
     pub fn is_subspan(&self, other: &Self) -> bool {
@@ -397,7 +405,7 @@ where
 }
 
 impl<Float: FloatT> Interval<Float> {
-    pub fn try_new(
+    pub fn new(
         segments: impl IntoIterator<Item = (bool, Float, Float, bool)>,
     ) -> Result<Self, Error> {
         let mut output = segments
@@ -421,6 +429,14 @@ impl<Float: FloatT> Interval<Float> {
 
         merge_interval_segments(&mut output);
         Ok(Self { segments: output })
+    }
+
+    pub fn new_unchecked(segments: impl IntoIterator<Item = (bool, Float, Float, bool)>) -> Self {
+        let mut output = Self {
+            segments: segments.into_iter().collect(),
+        };
+        merge_interval_segments(&mut output.segments);
+        output
     }
 
     pub fn segments(&self) -> &[(bool, Float, Float, bool)] {
@@ -568,8 +584,8 @@ mod tests {
 
     #[test]
     fn span_unions() {
-        let a = Span::try_new([(1, 7), (15, 21), (29, 35), (43, 49), (57, 63)]).unwrap();
-        let b = Span::try_new([
+        let a = Span::new([(1, 7), (15, 21), (29, 35), (43, 49), (57, 63)]).unwrap();
+        let b = Span::new([
             (4, 8),
             (11, 15),
             (18, 22),
@@ -583,13 +599,13 @@ mod tests {
         .unwrap();
         assert_eq!(
             a.union(b),
-            Span::try_new([(1, 8), (11, 22), (25, 36), (39, 50), (53, 63)]).unwrap()
+            Span::new([(1, 8), (11, 22), (25, 36), (39, 50), (53, 63)]).unwrap()
         );
     }
 
     #[test]
     fn span_differences() {
-        let a = Span::try_new([
+        let a = Span::new([
             (-149, -135),
             (-132, -122),
             (-111, -105),
@@ -612,7 +628,7 @@ mod tests {
             (146, 147),
         ])
         .unwrap();
-        let b = Span::try_new([
+        let b = Span::new([
             (-145, -93),
             (-86, -84),
             (-79, -75),
@@ -637,7 +653,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             a.difference(b),
-            Span::try_new([
+            Span::new([
                 (-149, -146),
                 (-132, -122),
                 (-111, -105),
@@ -668,7 +684,7 @@ mod tests {
 
     #[test]
     fn span_intersections() {
-        let a = Span::try_new([
+        let a = Span::new([
             (-230, -214),
             (-192, -174),
             (-173, -171),
@@ -691,7 +707,7 @@ mod tests {
             (218, 239),
         ])
         .unwrap();
-        let b = Span::try_new([
+        let b = Span::new([
             (-225, -166),
             (-164, -118),
             (-108, -82),
@@ -716,7 +732,7 @@ mod tests {
         .unwrap();
         assert_eq!(
             a.intersection(b),
-            Span::try_new([
+            Span::new([
                 (-225, -214),
                 (-192, -171),
                 (-164, -142),
