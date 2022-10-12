@@ -36,13 +36,13 @@ impl<T: Hash> IntoHashable for T {
 */
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum Error {
+pub enum NewIntervalError {
     SegmentPointNaN,
     StartPointGreaterThanEndPoint,
     ContainInf,
 }
 
-impl Display for Error {
+impl Display for NewIntervalError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -62,7 +62,28 @@ impl Display for Error {
     }
 }
 
-impl std::error::Error for Error {}
+impl std::error::Error for NewIntervalError {}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum NewSpanError {
+    StartPointGreaterThanEndPoint,
+}
+
+impl Display for NewSpanError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::StartPointGreaterThanEndPoint => {
+                    "Start point of segment cannot be greater than its end point"
+                }
+            }
+        )
+    }
+}
+
+impl std::error::Error for NewSpanError {}
 
 fn interval_segment_sort<Float: FloatT>(
     a: &(bool, Float, Float, bool),
@@ -130,16 +151,16 @@ where
     u8: TryInto<Int>,
     <u8 as TryInto<Int>>::Error: Debug,
 {
-    pub fn new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, Error> {
+    pub fn new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, NewSpanError> {
         let mut output = segments
             .into_iter()
             .map(|f| {
                 if f.0 > f.1 {
-                    return Err(Error::StartPointGreaterThanEndPoint);
+                    return Err(NewSpanError::StartPointGreaterThanEndPoint);
                 }
                 Ok(f)
             })
-            .collect::<Result<Vec<_>, Error>>()?;
+            .collect::<Result<Vec<_>, NewSpanError>>()?;
         merge_span_segments(&mut output);
         Ok(Self { segments: output })
     }
@@ -407,25 +428,25 @@ where
 impl<Float: FloatT> Interval<Float> {
     pub fn new(
         segments: impl IntoIterator<Item = (bool, Float, Float, bool)>,
-    ) -> Result<Self, Error> {
+    ) -> Result<Self, NewIntervalError> {
         let mut output = segments
             .into_iter()
             .filter_map(|f| {
                 if f.1.is_nan() | f.2.is_nan() {
-                    return Some(Err(Error::SegmentPointNaN));
+                    return Some(Err(NewIntervalError::SegmentPointNaN));
                 }
                 if f.1 > f.2 {
-                    return Some(Err(Error::StartPointGreaterThanEndPoint));
+                    return Some(Err(NewIntervalError::StartPointGreaterThanEndPoint));
                 }
                 if (f.1.is_infinite() & f.0) | (f.2.is_infinite() & f.3) {
-                    return Some(Err(Error::ContainInf));
+                    return Some(Err(NewIntervalError::ContainInf));
                 }
                 if (f.1 == f.2) & (!f.0 | !f.3) {
                     return None;
                 }
                 Some(Ok(f))
             })
-            .collect::<Result<Vec<_>, Error>>()?;
+            .collect::<Result<Vec<_>, NewIntervalError>>()?;
 
         merge_interval_segments(&mut output);
         Ok(Self { segments: output })
