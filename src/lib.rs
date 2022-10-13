@@ -96,12 +96,8 @@ fn span_segment_sort<Int: Integer>(a: &(Int, Int), b: &(Int, Int)) -> Ordering {
     a.0.cmp(&b.0)
 }
 
-fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>)
-where
-    u8: TryInto<Int>,
-    <u8 as TryInto<Int>>::Error: Debug,
-{
-    let one: Int = 1.try_into().unwrap();
+fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>) {
+    let one = Int::one();
     segments.sort_by(span_segment_sort);
     let mut index = 0;
     for i in 1..segments.len() {
@@ -116,19 +112,13 @@ where
 }
 
 #[derive(Clone, Debug, Default, Eq, Hash, PartialEq)]
-pub struct Span<Int: Integer + Clone>
-where
-    u8: TryInto<Int>,
-    <u8 as TryInto<Int>>::Error: Debug,
-{
+pub struct Span<Int: Integer + Clone> {
     pub(crate) segments: Vec<(Int, Int)>,
 }
 
 impl<Int: Integer + Clone> Display for Span<Int>
 where
     Int: Display,
-    u8: TryInto<Int>,
-    <u8 as TryInto<Int>>::Error: Debug,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
@@ -146,11 +136,7 @@ where
     }
 }
 
-impl<Int: Integer + Clone> Span<Int>
-where
-    u8: TryInto<Int>,
-    <u8 as TryInto<Int>>::Error: Debug,
-{
+impl<Int: Integer + Clone> Span<Int> {
     pub fn new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, NewSpanError> {
         let mut output = Self {
             segments: segments
@@ -186,7 +172,7 @@ where
     }
 
     pub fn difference(self, other: Self) -> Self {
-        let one: Int = 1.try_into().unwrap();
+        let one = Int::one();
         if other.segments.is_empty() {
             return self;
         }
@@ -400,8 +386,6 @@ impl<Float: FloatT> Eq for Interval<Float> where Float: Eq {}
 impl<Int: Integer + Clone, Float: FloatT> From<Span<Int>> for Interval<Float>
 where
     Int: Into<Float>,
-    u8: TryInto<Int>,
-    <u8 as TryInto<Int>>::Error: Debug,
 {
     fn from(span: Span<Int>) -> Self {
         Self {
@@ -417,8 +401,6 @@ where
 impl<Int: Integer, Float: FloatT> From<&Span<Int>> for Interval<Float>
 where
     Int: Copy + Into<Float>,
-    u8: TryInto<Int>,
-    <u8 as TryInto<Int>>::Error: Debug,
 {
     fn from(span: &Span<Int>) -> Self {
         Self {
