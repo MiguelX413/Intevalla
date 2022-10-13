@@ -395,6 +395,8 @@ impl<Float: FloatT> PartialEq for Interval<Float> {
     }
 }
 
+impl<Float: FloatT> Eq for Interval<Float> where Float: Eq {}
+
 impl<Int: Integer + Clone, Float: FloatT> From<Span<Int>> for Interval<Float>
 where
     Int: Into<Float>,
