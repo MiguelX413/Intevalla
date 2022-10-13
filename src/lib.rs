@@ -4,37 +4,6 @@ use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 
-trait IntoHashable {
-    type Hashable: Hash;
-    fn into_hashable(self) -> Self::Hashable;
-}
-
-impl IntoHashable for f64 {
-    type Hashable = u64;
-
-    fn into_hashable(self) -> Self::Hashable {
-        self.to_bits()
-    }
-}
-
-impl IntoHashable for f32 {
-    type Hashable = u32;
-
-    fn into_hashable(self) -> Self::Hashable {
-        self.to_bits()
-    }
-}
-
-/*
-impl<T: Hash> IntoHashable for T {
-    type Hashable = T;
-
-    fn to_hashable(self) -> Self::Hashable {
-        self
-    }
-}
-*/
-
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum NewIntervalError {
     SegmentPointNaN,
@@ -363,14 +332,11 @@ where
     }
 }
 
-impl<Float: FloatT> Hash for Interval<Float>
-where
-    Float: IntoHashable,
-{
+impl<Float: FloatT> Hash for Interval<Float> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.segments
             .iter()
-            .map(|f| (f.0, f.1.into_hashable(), f.2.into_hashable(), f.3))
+            .map(|f| (f.0, f.1.integer_decode(), f.2.integer_decode(), f.3))
             .for_each(|f| f.hash(state))
     }
 }
