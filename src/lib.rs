@@ -585,8 +585,50 @@ impl<Float: FloatT> Interval<Float> {
         true
     }
 
+    /// Returns `true` if the interval is a subinterval of another,
+    /// when `other` ∪ `self` == `other`.
+    ///
+    /// # Examples
+    /// ```
+    /// use intervalla::Interval;
+    ///
+    /// let sup = Interval::new([(true, 1.0, 10.0, false)]).unwrap();
+    /// let mut sub = Interval::new([]).unwrap();
+    ///
+    /// assert_eq!(sub.is_subinterval(&sup), true);
+    /// sub = sub.union(Interval::new([(true, 1.0, 3.0, false)]).unwrap());
+    /// assert_eq!(sub.is_subinterval(&sup), true);
+    /// sub = sub.union(Interval::new([(true, 10.0, 20.0, false)]).unwrap());
+    /// assert_eq!(sub.is_subinterval(&sup), false);
+    /// ```
     pub fn is_subinterval(&self, other: &Self) -> bool {
-        self == &self.clone().union(other.clone())
+        let mut pivot = 0;
+        self.segments.iter().all(|x| {
+            for y in &other.segments[pivot..] {
+                if (x.2 < y.1) | ((x.2 == y.1) & (!x.3 | !y.0)) {
+                    break;
+                }
+                if (
+                    // emulate min()
+                    if (x.1 < y.1) | ((x.1 == y.1) & x.0) {
+                        (&x.0, &x.1)
+                    } else {
+                        (&y.0, &y.1)
+                    },
+                    // emulate max()
+                    if (x.2 > y.2) | ((x.2 == y.2) & x.3) {
+                        (&x.2, &x.3)
+                    } else {
+                        (&y.2, &y.3)
+                    },
+                ) == ((&y.0, &y.1), (&y.2, &y.3))
+                {
+                    return true;
+                }
+                pivot += 1;
+            }
+            false
+        })
     }
 
     pub fn is_superinterval(&self, other: &Self) -> bool {
