@@ -3,6 +3,7 @@ use num_traits::Float as FloatT;
 use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
+use std::mem;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum NewIntervalError {
@@ -71,10 +72,16 @@ fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>) {
     let mut index = 0;
     for i in 1..segments.len() {
         if segments[index].1 >= segments[i].0.clone() - one.clone() {
-            segments[index].1 = max(&segments[index].1, &segments[i].1).clone();
+            // originally: `segments[index].1 = max(&segments[index].1, &segments[i].1).clone();`
+            // I couldn't do `mem::swap(&mut segments[index].1, &mut segments[i].1);` so I ended up with this
+            if segments[index].1 < segments[i].1 {
+                let split = segments.split_at_mut(max(index, i));
+                mem::swap(&mut split.0[min(index, i)].1, &mut split.1[0].1);
+            }
         } else {
             index += 1;
-            segments[index] = segments[i].clone();
+            // `segments[index] = segments[i].clone();`
+            segments.swap(index, i);
         }
     }
     segments.truncate(index + 1);
