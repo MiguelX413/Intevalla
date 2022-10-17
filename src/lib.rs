@@ -1,6 +1,6 @@
 use num_integer::Integer;
 use num_traits::Float as FloatT;
-use std::cmp::{max, min, Ordering};
+use std::cmp::{max, min};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::mem;
@@ -55,20 +55,9 @@ impl Display for NewSpanError {
 
 impl std::error::Error for NewSpanError {}
 
-fn interval_segment_sort<Float: FloatT>(
-    a: &(bool, Float, Float, bool),
-    b: &(bool, Float, Float, bool),
-) -> Ordering {
-    (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap()
-}
-
-fn span_segment_sort<Int: Integer>(a: &(Int, Int), b: &(Int, Int)) -> Ordering {
-    a.0.cmp(&b.0)
-}
-
 fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>) {
     let one = Int::one();
-    segments.sort_by(span_segment_sort);
+    segments.sort_by(|(a, _), (b, _)| a.cmp(b));
     let mut index = 0;
     for i in 1..segments.len() {
         if segments[index].1 >= segments[i].0.clone() - one.clone() {
@@ -273,7 +262,7 @@ impl<Int: Integer + Clone> Span<Int> {
 }
 
 fn merge_interval_segments<Float: FloatT>(segments: &mut Vec<(bool, Float, Float, bool)>) {
-    segments.sort_by(interval_segment_sort);
+    segments.sort_by(|a, b| (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap());
     let mut index = 0;
     for i in 1..segments.len() {
         if (segments[index].2 > segments[i].1)
