@@ -349,6 +349,7 @@ impl<Float: FloatT> Hash for Interval<Float> {
 }
 
 impl<Float: FloatT> PartialEq for Interval<Float> {
+    #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.segments == other.segments
     }
