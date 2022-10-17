@@ -62,8 +62,8 @@ fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>) {
     for i in 1..segments.len() {
         if segments[index].1 >= segments[i].0.clone() - one.clone() {
             // originally: `segments[index].1 = max(&segments[index].1, &segments[i].1).clone();`
-            // I couldn't do `mem::swap(&mut segments[index].1, &mut segments[i].1);` so I ended up with this
             if segments[index].1 < segments[i].1 {
+                // I couldn't do `mem::swap(&mut segments[index].1, &mut segments[i].1);` so I ended up with this
                 let split = segments.split_at_mut(max(index, i));
                 mem::swap(&mut split.0[min(index, i)].1, &mut split.1[0].1);
             }
