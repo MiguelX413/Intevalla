@@ -71,7 +71,7 @@ fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>) {
     let mut index = 0;
     for i in 1..segments.len() {
         if segments[index].1 >= segments[i].0.clone() - one.clone() {
-            segments[index].1 = max(segments[index].1.clone(), segments[i].1.clone());
+            segments[index].1 = max(&segments[index].1, &segments[i].1).clone();
         } else {
             index += 1;
             segments[index] = segments[i].clone();
