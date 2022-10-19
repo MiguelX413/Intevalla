@@ -285,6 +285,7 @@ fn merge_interval_segments<Float: FloatT>(segments: &mut Vec<(bool, Float, Float
     segments.truncate(index + 1);
 }
 
+#[inline]
 fn validate_interval_segment<Float: FloatT>(segment: &(bool, Float, Float, bool)) -> bool {
     (segment.1 < segment.2) | ((segment.1 == segment.2) & segment.0 & segment.3)
 }
