@@ -301,7 +301,7 @@ where
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self.segments.split_first() {
-            Some((&first, elements)) => {
+            Some((first, elements)) => {
                 write!(
                     f,
                     "{}{}, {}{}",
@@ -310,7 +310,7 @@ where
                     first.2,
                     if first.3 { "]" } else { ")" }
                 )?;
-                for &element in elements {
+                for element in elements {
                     write!(
                         f,
                         " ∪ {}{}, {}{}",
@@ -418,9 +418,9 @@ impl<Float: FloatT> Interval<Float> {
         &self.segments
     }
 
-    pub fn contains(&self, &item: &Float) -> bool {
-        self.segments.iter().any(|&f| {
-            ((f.1 < item) & (item < f.2)) | (((item == f.1) & f.0) | ((item == f.2) & f.3))
+    pub fn contains(&self, item: &Float) -> bool {
+        self.segments.iter().any(|f| {
+            ((&f.1 < item) & (item < &f.2)) | (((item == &f.1) & f.0) | ((item == &f.2) & f.3))
         })
     }
 
@@ -432,7 +432,7 @@ impl<Float: FloatT> Interval<Float> {
         let mut next_bound = 0;
         let mut bottom_bound;
         let mut temp_left_bound;
-        for &x in &self.segments {
+        for x in &self.segments {
             temp_left_bound = (x.0, x.1);
             bottom_bound = next_bound;
             for y in bottom_bound..other.segments.len() {
@@ -469,7 +469,7 @@ impl<Float: FloatT> Interval<Float> {
         let mut output = Self { segments: vec![] };
         let mut next_bound = 0;
         let mut bottom_bound;
-        for &x in &self.segments {
+        for x in &self.segments {
             bottom_bound = next_bound;
             for y in bottom_bound..other.segments.len() {
                 if (x.2 < other.segments[y].1)
