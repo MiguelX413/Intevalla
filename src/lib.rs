@@ -12,6 +12,20 @@ pub enum NewIntervalError {
     ContainInf,
 }
 
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub struct Error<E> {
+    segment: usize,
+    error: E,
+}
+
+impl<E: Debug + Display> Display for Error<E> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Error at segment #{}: {}", self.segment, self.error)
+    }
+}
+
+impl<E: Debug + Display> std::error::Error for Error<E> {}
+
 impl Display for NewIntervalError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(
@@ -33,6 +47,16 @@ impl Display for NewIntervalError {
 }
 
 impl std::error::Error for NewIntervalError {}
+
+impl<E> Error<E> {
+    pub fn segment(&self) -> usize {
+        self.segment
+    }
+
+    pub fn error(self) -> E {
+        self.error
+    }
+}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum NewSpanError {
@@ -102,17 +126,25 @@ where
 }
 
 impl<Int: Integer + Clone> Span<Int> {
-    pub fn new(segments: impl IntoIterator<Item = (Int, Int)>) -> Result<Self, NewSpanError> {
+    pub fn new(
+        segments: impl IntoIterator<Item = (Int, Int)>,
+    ) -> Result<Self, Error<NewSpanError>> {
         let mut output = Self {
             segments: segments
                 .into_iter()
-                .map(|f| {
+                .enumerate()
+                .map(|(i, f)| {
+                    let error = |e| Error {
+                        segment: i,
+                        error: e,
+                    };
+
                     if f.0 > f.1 {
-                        return Err(NewSpanError::StartPointGreaterThanEndPoint);
+                        return Err(error(NewSpanError::StartPointGreaterThanEndPoint));
                     }
                     Ok(f)
                 })
-                .collect::<Result<Vec<_>, NewSpanError>>()?,
+                .collect::<Result<Vec<_>, _>>()?,
         };
         merge_span_segments(&mut output.segments);
         Ok(output)
@@ -383,26 +415,32 @@ where
 impl<Float: FloatT> Interval<Float> {
     pub fn new(
         segments: impl IntoIterator<Item = (bool, Float, Float, bool)>,
-    ) -> Result<Self, NewIntervalError> {
+    ) -> Result<Self, Error<NewIntervalError>> {
         let mut output = Self {
             segments: segments
                 .into_iter()
-                .filter_map(|f| {
+                .enumerate()
+                .filter_map(|(i, f)| {
+                    let error = |e| Error {
+                        segment: i,
+                        error: e,
+                    };
+
                     if f.1.is_nan() | f.2.is_nan() {
-                        return Some(Err(NewIntervalError::SegmentPointNaN));
+                        return Some(Err(error(NewIntervalError::SegmentPointNaN)));
                     }
                     if f.1 > f.2 {
-                        return Some(Err(NewIntervalError::StartPointGreaterThanEndPoint));
+                        return Some(Err(error(NewIntervalError::StartPointGreaterThanEndPoint)));
                     }
                     if (f.1.is_infinite() & f.0) | (f.2.is_infinite() & f.3) {
-                        return Some(Err(NewIntervalError::ContainInf));
+                        return Some(Err(error(NewIntervalError::ContainInf)));
                     }
                     if (f.1 == f.2) & (!f.0 | !f.3) {
                         return None;
                     }
                     Some(Ok(f))
                 })
-                .collect::<Result<Vec<_>, NewIntervalError>>()?,
+                .collect::<Result<Vec<_>, _>>()?,
         };
 
         merge_interval_segments(&mut output.segments);
