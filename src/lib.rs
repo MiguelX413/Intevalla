@@ -80,11 +80,10 @@ impl Display for NewSpanError {
 impl std::error::Error for NewSpanError {}
 
 fn merge_span_segments<Int: Integer + Clone>(segments: &mut Vec<(Int, Int)>) {
-    let one = Int::one();
     segments.sort_by(|(a, _), (b, _)| a.cmp(b));
     let mut index = 0;
     for i in 1..segments.len() {
-        if segments[index].1 >= segments[i].0.clone() - one.clone() {
+        if segments[index].1 >= segments[i].0.clone() - Int::one() {
             // originally: `segments[index].1 = max(&segments[index].1, &segments[i].1).clone();`
             if segments[index].1 < segments[i].1 {
                 // I couldn't do `mem::swap(&mut segments[index].1, &mut segments[i].1);` so I ended up with this
