@@ -6,13 +6,6 @@ use std::hash::{Hash, Hasher};
 use std::mem;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
-pub enum NewIntervalError {
-    SegmentPointNaN,
-    StartPointGreaterThanEndPoint,
-    ContainInf,
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct Error<E> {
     segment: usize,
     error: E,
@@ -25,6 +18,23 @@ impl<E: Debug + Display> Display for Error<E> {
 }
 
 impl<E: Debug + Display> std::error::Error for Error<E> {}
+
+impl<E> Error<E> {
+    pub fn segment(&self) -> usize {
+        self.segment
+    }
+
+    pub fn error(self) -> E {
+        self.error
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum NewIntervalError {
+    SegmentPointNaN,
+    StartPointGreaterThanEndPoint,
+    ContainInf,
+}
 
 impl Display for NewIntervalError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -47,16 +57,6 @@ impl Display for NewIntervalError {
 }
 
 impl std::error::Error for NewIntervalError {}
-
-impl<E> Error<E> {
-    pub fn segment(&self) -> usize {
-        self.segment
-    }
-
-    pub fn error(self) -> E {
-        self.error
-    }
-}
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum NewSpanError {
