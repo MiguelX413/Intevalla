@@ -161,10 +161,7 @@ impl<Int: Integer + Clone> Span<Int> {
         &self.segments
     }
 
-    pub fn contains<U>(&self, item: &U) -> bool
-    where
-        U: PartialOrd<Int>,
-    {
+    pub fn contains(&self, item: &impl PartialOrd<Int>) -> bool {
         self.segments
             .iter()
             .any(|f| (item >= &f.0) & (item <= &f.1))
@@ -460,10 +457,7 @@ impl<Float: FloatT> Interval<Float> {
         &self.segments
     }
 
-    pub fn contains<U>(&self, item: &U) -> bool
-    where
-        U: PartialOrd<Float>,
-    {
+    pub fn contains(&self, item: &impl PartialOrd<Float>) -> bool {
         self.segments.iter().any(|f| {
             ((item > &f.1) & (item < &f.2)) | (((item == &f.1) & f.0) | ((item == &f.2) & f.3))
         })
