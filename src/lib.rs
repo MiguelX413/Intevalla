@@ -295,6 +295,8 @@ impl<Int: Integer + Clone> Span<Int> {
     }
 }
 
+/// Merges interval segments in place.
+/// Will panic if Floats are NaN because partial_cmp is unwrapped.
 fn merge_interval_segments<Float: FloatT>(segments: &mut Vec<(bool, Float, Float, bool)>) {
     segments.sort_by(|a, b| (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap());
     let mut index = 0;
