@@ -1,3 +1,5 @@
+mod peek_map;
+
 use num_integer::Integer;
 use num_traits::Float as FloatT;
 use std::cmp::{max, min};
