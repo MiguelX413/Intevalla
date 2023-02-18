@@ -2,7 +2,7 @@ mod peek_map;
 
 use num_integer::Integer;
 use num_traits::Float as FloatT;
-use std::cmp::{max, min};
+use std::cmp::{max, min, Ordering};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
 use std::mem;
@@ -165,8 +165,14 @@ impl<Int: Integer + Clone> Span<Int> {
 
     pub fn contains(&self, item: &impl PartialOrd<Int>) -> bool {
         self.segments
-            .iter()
-            .any(|f| (item >= &f.0) & (item <= &f.1))
+            .binary_search_by(|f| match (item.partial_cmp(&f.0), item.partial_cmp(&f.1)) {
+                (Some(Ordering::Greater), Some(Ordering::Less))
+                | (Some(Ordering::Equal), _)
+                | (_, Some(Ordering::Equal)) => Ordering::Equal,
+                (Some(Ordering::Less), _) => Ordering::Less,
+                _ => Ordering::Greater,
+            })
+            .is_ok()
     }
 
     pub fn difference(self, other: Self) -> Self {
@@ -460,9 +466,17 @@ impl<Float: FloatT> Interval<Float> {
     }
 
     pub fn contains(&self, item: &impl PartialOrd<Float>) -> bool {
-        self.segments.iter().any(|f| {
-            ((item > &f.1) & (item < &f.2)) | (((item == &f.1) & f.0) | ((item == &f.2) & f.3))
-        })
+        self.segments
+            .binary_search_by(|f| {
+                match (f.0, item.partial_cmp(&f.1), item.partial_cmp(&f.2), f.3) {
+                    (_, Some(Ordering::Greater), Some(Ordering::Less), _)
+                    | (true, Some(Ordering::Equal), _, _)
+                    | (_, _, Some(Ordering::Equal), true) => Ordering::Equal,
+                    (_, Some(Ordering::Less), _, _) => Ordering::Less,
+                    _ => Ordering::Greater,
+                }
+            })
+            .is_ok()
     }
 
     pub fn difference(self, other: Self) -> Self {
