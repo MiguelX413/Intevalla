@@ -1,5 +1,4 @@
 use num_integer::Integer;
-use num_traits::Float as FloatT;
 use std::cmp::{max, min};
 use std::fmt::{Debug, Display, Formatter};
 use std::hash::{Hash, Hasher};
@@ -294,7 +293,9 @@ impl<Int: Integer + Clone> Span<Int> {
 
 /// Merges interval segments in place.
 /// Will panic if Floats are NaN because partial_cmp is unwrapped.
-fn merge_interval_segments<Float: FloatT>(segments: &mut Vec<(bool, Float, Float, bool)>) {
+fn merge_interval_segments<Float: num_traits::Float>(
+    segments: &mut Vec<(bool, Float, Float, bool)>,
+) {
     segments.sort_by(|a, b| (a.1, !a.0).partial_cmp(&(b.1, !b.0)).unwrap());
     let mut index = 0;
     for i in 1..segments.len() {
@@ -319,16 +320,18 @@ fn merge_interval_segments<Float: FloatT>(segments: &mut Vec<(bool, Float, Float
 }
 
 #[inline]
-fn validate_interval_segment<Float: FloatT>(segment: &(bool, Float, Float, bool)) -> bool {
+fn validate_interval_segment<Float: num_traits::Float>(
+    segment: &(bool, Float, Float, bool),
+) -> bool {
     (segment.1 < segment.2) | ((segment.1 == segment.2) & segment.0 & segment.3)
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct Interval<Float: FloatT> {
+pub struct Interval<Float: num_traits::Float> {
     pub(crate) segments: Vec<(bool, Float, Float, bool)>,
 }
 
-impl<Float: FloatT> Display for Interval<Float>
+impl<Float: num_traits::Float> Display for Interval<Float>
 where
     Float: Display,
 {
@@ -362,7 +365,7 @@ where
     }
 }
 
-impl<Float: FloatT> Hash for Interval<Float> {
+impl<Float: num_traits::Float> Hash for Interval<Float> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.segments
             .iter()
@@ -371,16 +374,16 @@ impl<Float: FloatT> Hash for Interval<Float> {
     }
 }
 
-impl<Float: FloatT> PartialEq for Interval<Float> {
+impl<Float: num_traits::Float> PartialEq for Interval<Float> {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         self.segments == other.segments
     }
 }
 
-impl<Float: FloatT> Eq for Interval<Float> where Float: Eq {}
+impl<Float: num_traits::Float> Eq for Interval<Float> where Float: Eq {}
 
-impl<Int: Integer + Clone, Float: FloatT> From<Span<Int>> for Interval<Float>
+impl<Int: Integer + Clone, Float: num_traits::Float> From<Span<Int>> for Interval<Float>
 where
     Int: Into<Float>,
 {
@@ -395,7 +398,7 @@ where
     }
 }
 
-impl<Int: Integer, Float: FloatT> From<&Span<Int>> for Interval<Float>
+impl<Int: Integer, Float: num_traits::Float> From<&Span<Int>> for Interval<Float>
 where
     Int: Copy + Into<Float>,
 {
@@ -410,7 +413,7 @@ where
     }
 }
 
-impl<Float: FloatT> Interval<Float> {
+impl<Float: num_traits::Float> Interval<Float> {
     pub fn new(
         segments: impl IntoIterator<Item = (bool, Float, Float, bool)>,
     ) -> Result<Self, Error<NewIntervalError>> {
